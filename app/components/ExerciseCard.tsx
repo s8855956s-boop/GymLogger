@@ -15,7 +15,11 @@ const placeholderImage = require("../../assets/images/react-logo.png");
 export type ExerciseValue = {
   name: string;
   imageUri?: string | null;
-  sets: string;
+  setRows: SetRow[];
+};
+
+type SetRow = {
+  id: string;
   reps: string;
   weight: string;
 };
@@ -57,9 +61,35 @@ export default function ExerciseCard({
     });
   };
 
+  const handleAddSet = () => {
+    const newSet: SetRow = {
+      id: `set-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      reps: "",
+      weight: "",
+    };
+
+    updateField("setRows", [...value.setRows, newSet]);
+  };
+
+  const updateSetRow = (id: string, field: "reps" | "weight", next: string) => {
+    const nextRows = value.setRows.map((row) =>
+      row.id === id ? { ...row, [field]: next } : row
+    );
+
+    updateField("setRows", nextRows);
+  };
+
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>訓練內容</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>訓練內容</Text>
+        <Pressable
+          onPress={() => setUnitModalVisible(true)}
+          style={styles.unitBadge}
+        >
+          <Text style={styles.unitBadgeText}>{selectedUnitLabel}</Text>
+        </Pressable>
+      </View>
       <TextInput
         value={value.name}
         onChangeText={(text) => updateField("name", text)}
@@ -81,50 +111,40 @@ export default function ExerciseCard({
         </TouchableOpacity>
       </View>
 
-      <View style={styles.row}>
-        <View style={styles.field}>
-          <Text style={styles.label}>組數</Text>
-          <TextInput
-            value={value.sets}
-            onChangeText={(text) => updateField("sets", text)}
-            placeholder="0"
-            keyboardType="numeric"
-            style={styles.input}
-          />
-        </View>
-        <View style={styles.field}>
-          <Text style={styles.label}>次數</Text>
-          <TextInput
-            value={value.reps}
-            onChangeText={(text) => updateField("reps", text)}
-            placeholder="0"
-            keyboardType="numeric"
-            style={styles.input}
-          />
-        </View>
+      <View style={styles.setHeader}>
+        <Text style={styles.sectionTitle}>每組紀錄</Text>
+        <TouchableOpacity onPress={handleAddSet} style={styles.addButton}>
+          <Text style={styles.addButtonText}>+ 新增一列</Text>
+        </TouchableOpacity>
       </View>
 
-      <View style={styles.row}>
-        <View style={styles.field}>
-          <Text style={styles.label}>重量</Text>
-          <TextInput
-            value={value.weight}
-            onChangeText={(text) => updateField("weight", text)}
-            placeholder="0"
-            keyboardType="numeric"
-            style={styles.input}
-          />
+      {value.setRows.map((row, index) => (
+        <View key={row.id} style={styles.setRow}>
+          <View style={styles.setIndex}>
+            <Text style={styles.setIndexText}>{index + 1}</Text>
+          </View>
+          <View style={styles.field}>
+            <Text style={styles.label}>次數</Text>
+            <TextInput
+              value={row.reps}
+              onChangeText={(text) => updateSetRow(row.id, "reps", text)}
+              placeholder="0"
+              keyboardType="numeric"
+              style={styles.input}
+            />
+          </View>
+          <View style={styles.field}>
+            <Text style={styles.label}>重量</Text>
+            <TextInput
+              value={row.weight}
+              onChangeText={(text) => updateSetRow(row.id, "weight", text)}
+              placeholder="0"
+              keyboardType="numeric"
+              style={styles.input}
+            />
+          </View>
         </View>
-        <View style={styles.field}>
-          <Text style={styles.label}>單位</Text>
-          <Pressable
-            onPress={() => setUnitModalVisible(true)}
-            style={styles.dropdown}
-          >
-            <Text style={styles.dropdownText}>{selectedUnitLabel}</Text>
-          </Pressable>
-        </View>
-      </View>
+      ))}
 
       <Modal
         visible={isUnitModalVisible}
@@ -169,10 +189,26 @@ const styles = StyleSheet.create({
     elevation: 3,
     gap: 12,
   },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   title: {
     fontSize: 18,
     fontWeight: "600",
     color: "#1F2937",
+  },
+  unitBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#E0E7FF",
+  },
+  unitBadgeText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#4338CA",
   },
   input: {
     borderWidth: 1,
@@ -225,10 +261,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-  row: {
-    flexDirection: "row",
-    gap: 12,
-  },
   field: {
     flex: 1,
     gap: 8,
@@ -237,17 +269,50 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#6B7280",
   },
-  dropdown: {
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    backgroundColor: "#F9FAFB",
-  },
-  dropdownText: {
+  sectionTitle: {
     fontSize: 14,
+    fontWeight: "600",
     color: "#111827",
+  },
+  setHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 4,
+  },
+  addButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#111827",
+  },
+  addButtonText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  setRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 12,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 8,
+  },
+  setIndex: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "#E5E7EB",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  setIndexText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#4B5563",
   },
   modalBackdrop: {
     flex: 1,
