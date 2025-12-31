@@ -18,7 +18,6 @@ export type ExerciseValue = {
   sets: string;
   reps: string;
   weight: string;
-  unit: string;
 };
 
 type ExerciseCardProps = {
@@ -26,6 +25,8 @@ type ExerciseCardProps = {
   onChange: (nextValue: ExerciseValue) => void;
   onPickImage: () => void;
   unitOptions: string[];
+  unit: string;
+  onUnitChange: (nextUnit: string) => void;
 };
 
 export default function ExerciseCard({
@@ -33,16 +34,18 @@ export default function ExerciseCard({
   onChange,
   onPickImage,
   unitOptions,
+  unit,
+  onUnitChange,
 }: ExerciseCardProps) {
   const [isUnitModalVisible, setUnitModalVisible] = useState(false);
 
   const selectedUnitLabel = useMemo(() => {
-    if (value.unit) {
-      return value.unit;
+    if (unit) {
+      return unit;
     }
 
     return unitOptions[0] ?? "選擇單位";
-  }, [unitOptions, value.unit]);
+  }, [unit, unitOptions]);
 
   const updateField = <Key extends keyof ExerciseValue>(
     key: Key,
@@ -139,7 +142,7 @@ export default function ExerciseCard({
               <TouchableOpacity
                 key={option}
                 onPress={() => {
-                  updateField("unit", option);
+                  onUnitChange(option);
                   setUnitModalVisible(false);
                 }}
                 style={styles.modalOption}

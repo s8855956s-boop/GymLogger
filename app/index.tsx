@@ -11,8 +11,8 @@ export default function Index() {
     sets: "4",
     reps: "8",
     weight: "60",
-    unit: UNIT_OPTIONS[0],
   });
+  const [unit, setUnit] = useState(UNIT_OPTIONS[0]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -22,6 +22,8 @@ export default function Index() {
           onChange={setExercise}
           onPickImage={() => console.log("pick image")}
           unitOptions={UNIT_OPTIONS}
+          unit={unit}
+          onUnitChange={setUnit}
         />
       </View>
     </SafeAreaView>
