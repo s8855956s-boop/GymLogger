@@ -2,7 +2,7 @@ import { useState } from "react";
 import { SafeAreaView, StyleSheet, View } from "react-native";
 import ExerciseCard, { ExerciseValue } from "./components/ExerciseCard";
 
-const UNIT_OPTIONS = ["公斤", "磅", "次數"];
+const UNIT_OPTIONS = ["公斤", "磅"];
 
 export default function Index() {
   const [name, setName] = useState("深蹲");
