@@ -90,6 +90,19 @@ export default function ExerciseCard({
     updateField("setRows", nextRows);
   };
 
+  const handleToggleUnit = () => {
+  if (!unitOptions.length) return;
+
+  const currentIndex = unitOptions.indexOf(unit);
+  const nextIndex =
+    currentIndex === -1
+      ? 0
+      : (currentIndex + 1) % unitOptions.length;
+
+  onUnitChange(unitOptions[nextIndex]);
+};
+
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -97,7 +110,7 @@ export default function ExerciseCard({
         <View style={styles.unitRow}>
           <Text style={styles.unitLabel}>重量單位</Text>
           <Pressable
-          onPress={() => setUnitModalVisible(true)}
+          onPress={() => handleToggleUnit()}
           style={styles.unitBadge}
           >
             <Text style={styles.unitBadgeText}>{selectedUnitLabel}</Text>
