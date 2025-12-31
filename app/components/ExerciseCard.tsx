@@ -71,6 +71,17 @@ export default function ExerciseCard({
     updateField("setRows", [...value.setRows, newSet]);
   };
 
+  const handleDeleteSet = (id: string) => {
+    const nextSetRows = value.setRows.filter(row => {
+      if(row.id === id){
+        return false;
+      }
+      return true;
+    });
+
+    updateField("setRows", nextSetRows);
+  };;
+
   const updateSetRow = (id: string, field: "reps" | "weight", next: string) => {
     const nextRows = value.setRows.map((row) =>
       row.id === id ? { ...row, [field]: next } : row
@@ -83,12 +94,15 @@ export default function ExerciseCard({
     <View style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.title}>訓練內容</Text>
-        <Pressable
+        <View style={styles.unitRow}>
+          <Text style={styles.unitLabel}>重量單位</Text>
+          <Pressable
           onPress={() => setUnitModalVisible(true)}
           style={styles.unitBadge}
-        >
-          <Text style={styles.unitBadgeText}>{selectedUnitLabel}</Text>
-        </Pressable>
+          >
+            <Text style={styles.unitBadgeText}>{selectedUnitLabel}</Text>
+          </Pressable>
+        </View>
       </View>
       <TextInput
         value={value.name}
@@ -143,6 +157,9 @@ export default function ExerciseCard({
               style={styles.input}
             />
           </View>
+        <TouchableOpacity onPress={() => handleDeleteSet(row.id)} style={styles.deleteButton}>
+          <Text style={styles.deleteButtonText}>-</Text>
+        </TouchableOpacity>
         </View>
       ))}
 
@@ -178,6 +195,15 @@ export default function ExerciseCard({
 }
 
 const styles = StyleSheet.create({
+  unitRow: {
+    width: '40%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  unitLabel: {
+    marginRight: 8,
+  },
   card: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
@@ -200,6 +226,9 @@ const styles = StyleSheet.create({
     color: "#1F2937",
   },
   unitBadge: {
+    justifyContent: 'center', // 垂直置中
+    alignItems: 'center',     // 水平置中
+    width: '50%',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 999,
@@ -287,6 +316,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#111827",
   },
   addButtonText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  deleteButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#cf1313ff",
+  },
+  deleteButtonText: {
     color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "600",
