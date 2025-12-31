@@ -2,13 +2,13 @@ import { useState } from "react";
 import { SafeAreaView, StyleSheet, View } from "react-native";
 import ExerciseCard, { ExerciseValue } from "./components/ExerciseCard";
 
-const UNIT_OPTIONS = ["公斤", "磅", "次數"];
+const UNIT_OPTIONS = ["公斤", "磅"];
 
 export default function Index() {
   const [name, setName] = useState("深蹲");
-  const [sets, setSets] = useState("4");
-  const [reps, setReps] = useState("8");
-  const [weight, setWeight] = useState("60");
+  const [setRows, setSetRows] = useState([
+    { id: "set-1", reps: "8", weight: "60" },
+  ]);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [unit, setUnit] = useState(UNIT_OPTIONS[0]);
 
@@ -16,16 +16,12 @@ export default function Index() {
   const exerciseValue: ExerciseValue = {
     name,
     imageUri,
-    sets,
-    reps,
-    weight,
+    setRows,
   };
 
   const handleExerciseChange = (nextValue: ExerciseValue) => {
     setName(nextValue.name);
-    setSets(nextValue.sets);
-    setReps(nextValue.reps);
-    setWeight(nextValue.weight);
+    setSetRows(nextValue.setRows);
     setImageUri(nextValue.imageUri ?? null);
   };
 
