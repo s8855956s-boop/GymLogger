@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, SafeAreaView, StyleSheet, View } from "react-native";
+import { SafeAreaView, StyleSheet, View } from "react-native";
 import ExerciseCard, { ExerciseValue } from "./components/ExerciseCard";
 
 const UNIT_OPTIONS = ["公斤", "磅", "次數"];
@@ -20,7 +20,7 @@ export default function Index() {
         <ExerciseCard
           value={exercise}
           onChange={setExercise}
-          onPickImage={() => Alert.alert("選擇照片", "之後可串接相簿選擇")}
+          onPickImage={() => console.log("pick image")}
           unitOptions={UNIT_OPTIONS}
         />
       </View>

@@ -65,12 +65,16 @@ export default function ExerciseCard({
       />
 
       <View style={styles.imageRow}>
-        <Image
-          source={value.imageUri ? { uri: value.imageUri } : placeholderImage}
-          style={styles.image}
-        />
+        {value.imageUri ? (
+          <Image source={{ uri: value.imageUri }} style={styles.image} />
+        ) : (
+          <View style={styles.placeholder}>
+            <Image source={placeholderImage} style={styles.placeholderImage} />
+            <Text style={styles.placeholderText}>尚未新增照片</Text>
+          </View>
+        )}
         <TouchableOpacity onPress={onPickImage} style={styles.imageButton}>
-          <Text style={styles.imageButtonText}>選擇照片</Text>
+          <Text style={styles.imageButtonText}>新增照片</Text>
         </TouchableOpacity>
       </View>
 
@@ -186,6 +190,26 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 12,
     backgroundColor: "#F3F4F6",
+  },
+  placeholder: {
+    width: 72,
+    height: 72,
+    borderRadius: 12,
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    padding: 6,
+  },
+  placeholderImage: {
+    width: 32,
+    height: 32,
+    opacity: 0.8,
+  },
+  placeholderText: {
+    fontSize: 10,
+    color: "#6B7280",
+    textAlign: "center",
   },
   imageButton: {
     paddingVertical: 10,
