@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { SafeAreaView, ScrollView, StyleSheet, View } from "react-native";
-import ExerciseCard, { ExerciseValue } from "./components/ExerciseCard";
+import DetailExerciseCard, { ExerciseValue } from "./components/DetailExerciseCard";
+import ExerciseCard from "./components/ExerciseCard";
 
 const UNIT_OPTIONS = ["公斤", "磅"];
 
@@ -31,6 +32,10 @@ export default function Index() {
         <View style={styles.cardWrapper}>
           <ExerciseCard
             value={exerciseValue}
+            unit="公斤"
+          />
+          <DetailExerciseCard
+            value={exerciseValue}
             onChange={handleExerciseChange}
             onPickImage={() => console.log("pick image")}
             unitOptions={UNIT_OPTIONS}
@@ -54,6 +59,8 @@ const styles = StyleSheet.create({
     paddingBottom: 32, // 底部留空，避免被 home indicator 吃掉
   },
   cardWrapper: {
+    flexDirection: "column",
+    gap: 16,
     marginTop: 16,
   },
 });

@@ -1,357 +1,67 @@
-import { useMemo, useState } from "react";
-import {
-  Image,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
-
-const placeholderImage = require("../../assets/images/react-logo.png");
-
-export type ExerciseValue = {
-  name: string;
-  imageUri?: string | null;
-  setRows: SetRow[];
-};
-
-type SetRow = {
-  id: string;
-  reps: string;
-  weight: string;
-};
+import { StyleSheet, Text, View } from "react-native";
+import { ExerciseValue } from "./DetailExerciseCard";
 
 type ExerciseCardProps = {
   value: ExerciseValue;
-  onChange: (nextValue: ExerciseValue) => void;
-  onPickImage: () => void;
-  unitOptions: string[];
-  unit: string;
-  onUnitChange: (nextUnit: string) => void;
+  unit?: string;
 };
 
-export default function ExerciseCard({
-  value,
-  onChange,
-  onPickImage,
-  unitOptions,
-  unit,
-  onUnitChange,
-}: ExerciseCardProps) {
-  const [isUnitModalVisible, setUnitModalVisible] = useState(false);
-
-  const selectedUnitLabel = useMemo(() => {
-    if (unit) {
-      return unit;
-    }
-
-    return unitOptions[0] ?? "選擇單位";
-  }, [unit, unitOptions]);
-
-  const updateField = <Key extends keyof ExerciseValue>(
-    key: Key,
-    fieldValue: ExerciseValue[Key]
-  ) => {
-    onChange({
-      ...value,
-      [key]: fieldValue,
-    });
-  };
-
-  const handleAddSet = () => {
-    const newSet: SetRow = {
-      id: `set-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      reps: "",
-      weight: "",
-    };
-
-    updateField("setRows", [...value.setRows, newSet]);
-  };
-
-  const handleDeleteSet = (id: string) => {
-    const nextSetRows = value.setRows.filter(row => {
-      if(row.id === id){
-        return false;
-      }
-      return true;
-    });
-
-    updateField("setRows", nextSetRows);
-  };;
-
-  const updateSetRow = (id: string, field: "reps" | "weight", next: string) => {
-    const nextRows = value.setRows.map((row) =>
-      row.id === id ? { ...row, [field]: next } : row
-    );
-
-    updateField("setRows", nextRows);
-  };
-
-  const handleToggleUnit = () => {
-  if (!unitOptions.length) return;
-
-  const currentIndex = unitOptions.indexOf(unit);
-  const nextIndex =
-    currentIndex === -1
-      ? 0
-      : (currentIndex + 1) % unitOptions.length;
-
-  onUnitChange(unitOptions[nextIndex]);
-};
-
-
+export default function ExerciseCard({ value, unit }: ExerciseCardProps) {
   return (
     <View style={styles.card}>
-      <View style={styles.header}>
-        <Text style={styles.title}>訓練內容</Text>
-        <View style={styles.unitRow}>
-          <Text style={styles.unitLabel}>重量單位</Text>
-          <Pressable
-          onPress={() => handleToggleUnit()}
-          style={styles.unitBadge}
-          >
-            <Text style={styles.unitBadgeText}>{selectedUnitLabel}</Text>
-          </Pressable>
-        </View>
-      </View>
-      <TextInput
-        value={value.name}
-        onChangeText={(text) => updateField("name", text)}
-        placeholder="運動名稱"
-        style={styles.input}
-      />
+      <Text style={styles.title}>{value.name || "未命名動作"}</Text>
 
-      <View style={styles.imageRow}>
-        {value.imageUri ? (
-          <Image source={{ uri: value.imageUri }} style={styles.image} />
+      <View style={styles.rows}>
+        {value.setRows.length ? (
+          value.setRows.map((row, index) => (
+            <View key={row.id || index} style={styles.row}>
+              <View style={styles.setIndex}>
+                <Text style={styles.index}>{index + 1}</Text>
+              </View>
+              <Text style={styles.rowText}>{row.reps || "-"} 次</Text>
+              <Text style={styles.dot}>·</Text>
+              <Text style={styles.rowText}>
+                {row.weight || "-"}
+                {unit ? ` ${unit}` : ""}
+              </Text>
+            </View>
+          ))
         ) : (
-          <View style={styles.placeholder}>
-            <Image source={placeholderImage} style={styles.placeholderImage} />
-            <Text style={styles.placeholderText}>尚未新增照片</Text>
-          </View>
+          <Text style={styles.emptyText}>尚未新增組數</Text>
         )}
-        <TouchableOpacity onPress={onPickImage} style={styles.imageButton}>
-          <Text style={styles.imageButtonText}>新增照片</Text>
-        </TouchableOpacity>
       </View>
-
-      <View style={styles.setHeader}>
-        <Text style={styles.sectionTitle}>每組紀錄</Text>
-        <TouchableOpacity onPress={handleAddSet} style={styles.addButton}>
-          <Text style={styles.addButtonText}>+ 新增一列</Text>
-        </TouchableOpacity>
-      </View>
-
-      {value.setRows.map((row, index) => (
-        <View key={row.id} style={styles.setRow}>
-          <View style={styles.setIndex}>
-            <Text style={styles.setIndexText}>{index + 1}</Text>
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>次數</Text>
-            <TextInput
-              value={row.reps}
-              onChangeText={(text) => updateSetRow(row.id, "reps", text)}
-              placeholder="0"
-              keyboardType="numeric"
-              style={styles.input}
-            />
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>重量</Text>
-            <TextInput
-              value={row.weight}
-              onChangeText={(text) => updateSetRow(row.id, "weight", text)}
-              placeholder="0"
-              keyboardType="numeric"
-              style={styles.input}
-            />
-          </View>
-        <TouchableOpacity onPress={() => handleDeleteSet(row.id)} style={styles.deleteButton}>
-          <Text style={styles.deleteButtonText}>-</Text>
-        </TouchableOpacity>
-        </View>
-      ))}
-
-      <Modal
-        visible={isUnitModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setUnitModalVisible(false)}
-      >
-        <Pressable
-          style={styles.modalBackdrop}
-          onPress={() => setUnitModalVisible(false)}
-        >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>選擇單位</Text>
-            {unitOptions.map((option) => (
-              <TouchableOpacity
-                key={option}
-                onPress={() => {
-                  onUnitChange(option);
-                  setUnitModalVisible(false);
-                }}
-                style={styles.modalOption}
-              >
-                <Text style={styles.modalOptionText}>{option}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </Pressable>
-      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  unitRow: {
-    width: '40%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  unitLabel: {
-    marginRight: 8,
-  },
   card: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 16,
     shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    elevation: 2,
     gap: 12,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
   },
   title: {
     fontSize: 18,
-    fontWeight: "600",
-    color: "#1F2937",
-  },
-  unitBadge: {
-    justifyContent: 'center', // 垂直置中
-    alignItems: 'center',     // 水平置中
-    width: '50%',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: "#E0E7FF",
-  },
-  unitBadgeText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#4338CA",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    backgroundColor: "#F9FAFB",
-  },
-  imageRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  image: {
-    width: 72,
-    height: 72,
-    borderRadius: 12,
-    backgroundColor: "#F3F4F6",
-  },
-  placeholder: {
-    width: 72,
-    height: 72,
-    borderRadius: 12,
-    backgroundColor: "#F3F4F6",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-    padding: 6,
-  },
-  placeholderImage: {
-    width: 32,
-    height: 32,
-    opacity: 0.8,
-  },
-  placeholderText: {
-    fontSize: 10,
-    color: "#6B7280",
-    textAlign: "center",
-  },
-  imageButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 999,
-    backgroundColor: "#111827",
-  },
-  imageButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  field: {
-    flex: 1,
-    gap: 8,
-  },
-  label: {
-    fontSize: 12,
-    color: "#6B7280",
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#111827",
   },
-  setHeader: {
+  rows: {
+    gap: 8,
+  },
+  row: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 4,
-  },
-  addButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: "#111827",
-  },
-  addButtonText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  deleteButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: "#cf1313ff",
-  },
-  deleteButtonText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  setRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 12,
+    gap: 8,
     backgroundColor: "#F9FAFB",
     borderRadius: 12,
-    padding: 12,
-    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   setIndex: {
     width: 26,
@@ -360,37 +70,23 @@ const styles = StyleSheet.create({
     backgroundColor: "#E5E7EB",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 20,
   },
-  setIndexText: {
+  index: {
     fontSize: 12,
     fontWeight: "600",
     color: "#4B5563",
   },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "center",
-    padding: 24,
-  },
-  modalContent: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 16,
-    gap: 12,
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#111827",
-  },
-  modalOption: {
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
-  },
-  modalOptionText: {
+  rowText: {
     fontSize: 14,
     color: "#1F2937",
+    fontWeight: "500",
+  },
+  dot: {
+    fontSize: 14,
+    color: "#9CA3AF",
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#6B7280",
   },
 });
