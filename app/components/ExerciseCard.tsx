@@ -1,14 +1,14 @@
-import { StyleSheet, Text, View } from "react-native";
-import { ExerciseValue } from "./DetailExerciseCard";
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { ExerciseValue } from "../(tabs)/DetailExerciseCard";
 
 type ExerciseCardProps = {
   value: ExerciseValue;
-  unit?: string;
+  parentStyle?: StyleProp<ViewStyle>;
 };
 
-export default function ExerciseCard({ value, unit }: ExerciseCardProps) {
+export default function ExerciseCard({ value, parentStyle }: ExerciseCardProps) {
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, parentStyle]}>
       <Text style={styles.title}>{value.name || "未命名動作"}</Text>
 
       <View style={styles.rows}>
@@ -22,7 +22,7 @@ export default function ExerciseCard({ value, unit }: ExerciseCardProps) {
               <Text style={styles.dot}>·</Text>
               <Text style={styles.rowText}>
                 {row.weight || "-"}
-                {unit ? ` ${unit}` : ""}
+                {value.unit ? ` ${value.unit}` : ""}
               </Text>
             </View>
           ))

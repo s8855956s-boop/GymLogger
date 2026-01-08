@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useLocalSearchParams } from "expo-router";
 import {
   Image,
   Modal,
@@ -12,8 +13,11 @@ import {
 
 const placeholderImage = require("../../assets/images/react-logo.png");
 
+const UNIT_OPTIONS = ["公斤", "磅"];
+
 export type ExerciseValue = {
   name: string;
+  unit: string | null;
   imageUri?: string | null;
   setRows: SetRow[];
 };
@@ -25,37 +29,60 @@ type SetRow = {
 };
 
 type DetailExerciseCardProps = {
-  value: ExerciseValue;
-  onChange: (nextValue: ExerciseValue) => void;
-  onPickImage: () => void;
-  unitOptions: string[];
-  unit: string;
-  onUnitChange: (nextUnit: string) => void;
+  value?: ExerciseValue;
 };
 
 export default function DetailExerciseCard({
-  value,
-  onChange,
-  onPickImage,
-  unitOptions,
-  unit,
-  onUnitChange,
+  value: valueProp,
 }: DetailExerciseCardProps) {
+  const { value: valueParam } = useLocalSearchParams<{ value?: string }>();
+  const initialValue = useMemo(() => {
+    if (valueProp) {
+      return valueProp;
+    }
+
+    if (typeof valueParam === "string") {
+      try {
+        return JSON.parse(valueParam) as ExerciseValue;
+      } catch {
+        return {
+          name: "",
+          unit: null,
+          imageUri: null,
+          setRows: [],
+        };
+      }
+    }
+
+    return {
+      name: "",
+      unit: null,
+      imageUri: null,
+      setRows: [],
+    };
+  }, [valueParam, valueProp]);
+
+  const [value, setValue] = useState<ExerciseValue>(initialValue);
+
+  const handleExerciseChange = (nextValue: ExerciseValue) => {
+    setValue(nextValue);
+  };
+
   const [isUnitModalVisible, setUnitModalVisible] = useState(false);
 
   const selectedUnitLabel = useMemo(() => {
-    if (unit) {
-      return unit;
+    if (value.unit) {
+      return value.unit;
     }
 
-    return unitOptions[0] ?? "選擇單位";
-  }, [unit, unitOptions]);
+    return UNIT_OPTIONS[0] ?? "選擇單位";
+  }, [value.unit, UNIT_OPTIONS]);
 
   const updateField = <Key extends keyof ExerciseValue>(
     key: Key,
     fieldValue: ExerciseValue[Key]
   ) => {
-    onChange({
+    handleExerciseChange({
       ...value,
       [key]: fieldValue,
     });
@@ -91,17 +118,16 @@ export default function DetailExerciseCard({
   };
 
   const handleToggleUnit = () => {
-  if (!unitOptions.length) return;
-
-  const currentIndex = unitOptions.indexOf(unit);
+  const currentIndex = UNIT_OPTIONS.indexOf(selectedUnitLabel);
   const nextIndex =
     currentIndex === -1
       ? 0
-      : (currentIndex + 1) % unitOptions.length;
+      : (currentIndex + 1) % UNIT_OPTIONS.length;
 
-  onUnitChange(unitOptions[nextIndex]);
+  updateField("unit", UNIT_OPTIONS[nextIndex]);
 };
 
+const onPickImage = () => console.log("pick image");
 
   return (
     <View style={styles.card}>
@@ -188,11 +214,11 @@ export default function DetailExerciseCard({
         >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>選擇單位</Text>
-            {unitOptions.map((option) => (
+            {UNIT_OPTIONS.map((option) => (
               <TouchableOpacity
                 key={option}
                 onPress={() => {
-                  onUnitChange(option);
+                  handleToggleUnit();
                   setUnitModalVisible(false);
                 }}
                 style={styles.modalOption}
