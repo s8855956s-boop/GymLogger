@@ -1,36 +1,26 @@
 import { StyleSheet, View } from "react-native";
-import { ExerciseValue } from "./DetailExerciseCard";
-import ExerciseProgramDetail from "./ExerciseProgramDetail";
+import ExerciseProgram, { ExerciseProgramValue } from "../components/ExerciseProgram";
 
-const exercises : ExerciseValue[] = [
+const exercisePrograms : ExerciseProgramValue[] = [
   {
-    name: "深蹲",
-    unit: "公斤",
-    imageUri: null,
-    setRows: [{id: "set-1", reps: "8", weight: "60"},
-      {id: "set-2", reps: "7", weight: "60"},
-    {id: "set-3", reps: "8", weight: "50"}],
+    id: "1",
+    name: "腿部訓練",
   },
   {
-    name: "Zercher Squat",
-    unit: "公斤",
-    imageUri: null,
-    setRows: [{id: "set-1", reps: "8", weight: "60"}],
-  },
-  {
-    name: "Leg Press",
-    unit: "磅",
-    imageUri: null,
-    setRows: [{id: "set-1", reps: "8", weight: "60"}],
+    id: "2",
+    name: "胸肌訓練"
   }
 ];
 
 export default function Index() {
 
   return (
-    <View>
-      <ExerciseProgramDetail exercises={exercises}/>
+    <View style={styles.rows}>
+      {exercisePrograms.map((row, index) => (
+        <ExerciseProgram key={index} value={row}/>
+      ))}
     </View>
+
     // <SafeAreaView style={styles.container}>
     //   <ScrollView contentContainerStyle={styles.scrollContent}>
     //     <View style={styles.cardWrapper}>
@@ -49,18 +39,8 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F3F4F6",
-    padding: 16,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 32, // 底部留空，避免被 home indicator 吃掉
-  },
-  cardWrapper: {
-    flexDirection: "column",
-    gap: 16,
-    marginTop: 16,
+  rows: {
+    marginTop: 10,
+    gap: 10,
   },
 });

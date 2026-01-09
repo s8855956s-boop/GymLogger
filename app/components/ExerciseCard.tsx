@@ -3,16 +3,56 @@ import { ExerciseValue } from "../(tabs)/DetailExerciseCard";
 
 type ExerciseCardProps = {
   value: ExerciseValue;
+  isProgram?: boolean;
   parentStyle?: StyleProp<ViewStyle>;
 };
 
-export default function ExerciseCard({ value, parentStyle }: ExerciseCardProps) {
+export default function ExerciseCard({ value, isProgram = false, parentStyle }: ExerciseCardProps) {
+  const setsAreIdentical = () => {
+    const repsOfSets: string[] = [];
+    const weightsOfSets: string[] = [];
+    value.setRows.map((row) => {
+      repsOfSets.push(row.reps);
+      weightsOfSets.push(row.weight);
+    });
+
+    const repsOfFirst = repsOfSets.find(v => v != null);
+    const weightOfFirst = weightsOfSets.find(v => v != null);
+
+    return !((repsOfFirst != null && repsOfSets.some(v => v != null && v !== repsOfFirst))
+    || weightOfFirst != null && weightsOfSets.some(v => v != null && v !== weightOfFirst));
+  }
+
+  const renderProgramSummary = () => {
+    if (setsAreIdentical()) {
+      return (
+        <View style={styles.row}>
+          <Text style={styles.rowText}>共{value.setRows.length}組</Text>
+          <Text style={styles.rowText}>每組{value.setRows[0].reps || "-"} 次</Text>
+          <Text style={styles.dot}>·</Text>
+          <Text style={styles.rowText}>
+            {value.setRows[0].weight || "-"}
+            {value.unit ? ` ${value.unit}` : ""}
+          </Text>
+        </View>
+      );
+    } else {
+      return (
+        <View style={styles.summary}>
+          <Text>共{value.setRows.length}組</Text>
+        </View>
+      );
+    }
+  }
+
   return (
     <View style={[styles.card, parentStyle]}>
       <Text style={styles.title}>{value.name || "未命名動作"}</Text>
 
       <View style={styles.rows}>
-        {value.setRows.length ? (
+        {isProgram ? renderProgramSummary() : <></>}
+        {(isProgram && setsAreIdentical()) ? <></> :
+        value.setRows.length ? (
           value.setRows.map((row, index) => (
             <View key={row.id || index} style={styles.row}>
               <View style={styles.setIndex}>
@@ -60,6 +100,10 @@ const styles = StyleSheet.create({
     gap: 8,
     backgroundColor: "#F9FAFB",
     borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  summary: {
     paddingHorizontal: 12,
     paddingVertical: 10,
   },

@@ -1,0 +1,48 @@
+import { router } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+
+export type ExerciseProgramValue = {
+    id: string;
+    name: string;
+}
+
+type ExerciseProgramProps = {
+    value: ExerciseProgramValue;
+}
+
+export default function ExerciseProgram({ value } : ExerciseProgramProps) {
+    
+    const handlePress = (id: string) => {
+        router.push({
+            pathname: "/(tabs)/ExerciseProgramDetail",
+            params: { id: id},
+        })
+    }
+
+    return(
+        <Pressable onPress={() => handlePress(value.id)}>
+            <View style={styles.card}>
+                <Text style={styles.title}>{value.name || "未命名Program"}</Text>
+            </View>
+        </Pressable>
+    );
+}
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+    gap: 12,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111827",
+  },
+});

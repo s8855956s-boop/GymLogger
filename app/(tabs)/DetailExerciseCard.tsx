@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
+import { useMemo, useState } from "react";
 import {
   Image,
   Modal,
@@ -76,7 +76,7 @@ export default function DetailExerciseCard({
     }
 
     return UNIT_OPTIONS[0] ?? "選擇單位";
-  }, [value.unit, UNIT_OPTIONS]);
+  }, [value.unit]);
 
   const updateField = <Key extends keyof ExerciseValue>(
     key: Key,
