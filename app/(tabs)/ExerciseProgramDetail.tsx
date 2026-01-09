@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import ExerciseCard from "../components/ExerciseCard";
@@ -78,7 +78,7 @@ export default function ExerciseProgramDetail({
     id: idProp,
 }: ExerciseProgramDetailProps) {
     const router = useRouter();
-      const { id: idParam } = useLocalSearchParams<{ id?: string }>();
+      const { id: idParam, name: programName } = useLocalSearchParams<{ id?: string, name?: string }>();
       const exercises = useMemo<ExerciseValue[]>(() => {
         if (idProp) {
             const program = programs.find(v => v.id === idProp);
@@ -105,15 +105,16 @@ export default function ExerciseProgramDetail({
         return [];
       }, [idParam, idProp]);
 
-    const handlePress = (exercise: ExerciseValue) => {
+    const handlePress = (exercise: ExerciseValue,) => {
         router.push({
             pathname: "/DetailExerciseCard",
-            params: { value: JSON.stringify(exercise) },
+            params: { value: JSON.stringify(exercise), name: exercise.name },
         });
     };
 
     return (
     <View>
+    <Stack.Screen options={{ title: programName ?? "課表"}}/>
         {exercises.map((row, index) => (
             <Pressable key={index} onPress={() => handlePress(row)}>
                 <ExerciseCard value={ row } isProgram={true} parentStyle={styles.exerciseCard}/>

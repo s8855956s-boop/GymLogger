@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   Image,
@@ -35,7 +35,7 @@ type DetailExerciseCardProps = {
 export default function DetailExerciseCard({
   value: valueProp,
 }: DetailExerciseCardProps) {
-  const { value: valueParam } = useLocalSearchParams<{ value?: string }>();
+  const { value: valueParam, name: exersiceName } = useLocalSearchParams<{ value?: string, name?: string }>();
   const initialValue = useMemo(() => {
     if (valueProp) {
       return valueProp;
@@ -131,6 +131,7 @@ const onPickImage = () => console.log("pick image");
 
   return (
     <View style={styles.card}>
+      <Stack.Screen options={{ title: exersiceName ?? "運動項目"}}/>
       <View style={styles.header}>
         <Text style={styles.title}>訓練內容</Text>
         <View style={styles.unitRow}>

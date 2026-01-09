@@ -12,15 +12,15 @@ type ExerciseProgramProps = {
 
 export default function ExerciseProgram({ value } : ExerciseProgramProps) {
     
-    const handlePress = (id: string) => {
+    const handlePress = (id: string, name: string) => {
         router.push({
             pathname: "/(tabs)/ExerciseProgramDetail",
-            params: { id: id},
+            params: { id: id, name: name},
         })
     }
 
     return(
-        <Pressable onPress={() => handlePress(value.id)}>
+        <Pressable onPress={() => handlePress(value.id, value.name)}>
             <View style={styles.card}>
                 <Text style={styles.title}>{value.name || "未命名Program"}</Text>
             </View>
