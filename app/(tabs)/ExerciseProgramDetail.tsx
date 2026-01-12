@@ -2,7 +2,7 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import ExerciseCard from "../components/ExerciseCard";
-import { ExerciseValue } from "./DetailExerciseCard";
+import { ExerciseValue } from "./ExerciseCardDetail";
 
 type Program = {
   id: string;
@@ -107,7 +107,7 @@ export default function ExerciseProgramDetail({
 
     const handlePress = (exercise: ExerciseValue,) => {
         router.push({
-            pathname: "/DetailExerciseCard",
+            pathname: "/ExerciseCardDetail",
             params: { value: JSON.stringify(exercise), name: exercise.name },
         });
     };
