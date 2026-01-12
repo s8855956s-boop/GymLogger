@@ -20,15 +20,20 @@ export default function ExerciseProgram({ value } : ExerciseProgramProps) {
     }
 
     return(
-        <Pressable onPress={() => handlePress(value.id, value.name)}>
+        <View style={styles.mainContainer}>
+            <Pressable onPress={() => handlePress(value.id, value.name)}>
             <View style={styles.card}>
                 <Text style={styles.title}>{value.name || "未命名Program"}</Text>
             </View>
         </Pressable>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    marginTop: 12,
+  },
   card: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
