@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ExerciseCard from "../components/ExerciseCard";
 import { ExerciseValue } from "./ExerciseCardDetail";
 
@@ -112,8 +112,17 @@ export default function ExerciseProgramDetail({
         });
     };
 
+    const handleAdd = () => {
+        router.push({
+            pathname: "/ExerciseCardDetail",
+        });
+    }
+
     return (
-    <View>
+    <View style={styles.mainContainer}>
+      <TouchableOpacity style={styles.addButton} onPress={() => handleAdd()}>
+        <Text style={styles.addButtonText}>+</Text>
+      </TouchableOpacity>
     <Stack.Screen options={{ title: programName ?? "課表"}}/>
         {exercises.map((row, index) => (
             <Pressable key={index} onPress={() => handlePress(row)}>
@@ -124,7 +133,26 @@ export default function ExerciseProgramDetail({
 }
 
 const styles = StyleSheet.create({
+    mainContainer: {
+        marginTop: 10,
+        gap: 10,
+        paddingHorizontal: 16,
+    },
     exerciseCard: {
-        margin: 10,
-    }
+        gap: 10,
+    },
+    addButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#111827",
+    },
+    addButtonText: {
+      color: "#FFFFFF",
+      fontSize: 22,
+      fontWeight: "700",
+      lineHeight: 22,
+    },
 });
