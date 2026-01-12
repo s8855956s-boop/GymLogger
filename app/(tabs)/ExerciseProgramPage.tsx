@@ -14,19 +14,16 @@ const exercisePrograms : ExerciseProgramValue[] = [
 ];
 
 export default function ExerciseProgramPage() {
-  const onAddProgram = () => {
-      const handlePress = (id: string, name: string) => {
-          router.push({
-              pathname: "/(tabs)/ExerciseProgramDetail",
-              params: { id: id, name: name},
-          })
-      };
+    const handleAdd = () => {
+        router.push({
+            pathname: "/ExerciseProgramDetail",
+        });
     }
 
   return(
   <View style={styles.container}>
   <Stack.Screen options={{ title: "訓練課表"}}/>
-    <TouchableOpacity style={styles.addButton} onPress={() => {}}>
+    <TouchableOpacity style={styles.addButton} onPress={() => handleAdd()}>
       <Text style={styles.addButtonText}>+</Text>
     </TouchableOpacity>
     <View style={styles.rows}>
