@@ -28,13 +28,13 @@ type SetRow = {
   weight: string;
 };
 
-type DetailExerciseCardProps = {
+type ExerciseCardDetailProps = {
   value?: ExerciseValue;
 };
 
-export default function DetailExerciseCard({
+export default function ExerciseCardDetail({
   value: valueProp,
-}: DetailExerciseCardProps) {
+}: ExerciseCardDetailProps) {
   const { value: valueParam, name: exersiceName } = useLocalSearchParams<{ value?: string, name?: string }>();
   const initialValue = useMemo(() => {
     if (valueProp) {
@@ -130,7 +130,7 @@ export default function DetailExerciseCard({
 const onPickImage = () => console.log("pick image");
 
   return (
-    <View style={styles.card}>
+    <View style={styles.mainContainer}>
       <Stack.Screen options={{ title: exersiceName ?? "運動項目"}}/>
       <View style={styles.header}>
         <Text style={styles.title}>訓練內容</Text>
@@ -244,14 +244,9 @@ const styles = StyleSheet.create({
   unitLabel: {
     marginRight: 8,
   },
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
+  mainContainer: {
     padding: 16,
     shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
     elevation: 3,
     gap: 12,
   },
@@ -373,10 +368,8 @@ const styles = StyleSheet.create({
   },
   setRow: {
     flexDirection: "row",
-    alignItems: "flex-end",
+    alignItems: "center",
     gap: 12,
-    backgroundColor: "#F9FAFB",
-    borderRadius: 12,
     padding: 12,
     marginTop: 8,
   },
@@ -387,7 +380,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#E5E7EB",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 20,
   },
   setIndexText: {
     fontSize: 12,
