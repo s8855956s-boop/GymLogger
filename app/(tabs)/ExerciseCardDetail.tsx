@@ -1,9 +1,10 @@
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   Image,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -35,6 +36,7 @@ type ExerciseCardDetailProps = {
 export default function ExerciseCardDetail({
   value: valueProp,
 }: ExerciseCardDetailProps) {
+  const router = useRouter();
   const { value: valueParam, name: exersiceName } = useLocalSearchParams<{ value?: string, name?: string }>();
   const initialValue = useMemo(() => {
     if (valueProp) {
@@ -129,123 +131,159 @@ export default function ExerciseCardDetail({
 
 const onPickImage = () => console.log("pick image");
 
+const handleSave = () => {
+  router.back();
+};
+
   return (
     <View style={styles.mainContainer}>
-      <Stack.Screen options={{ title: exersiceName ?? "運動項目"}}/>
-      <View style={styles.header}>
-        <Text style={styles.title}>訓練內容</Text>
-        <View style={styles.unitRow}>
-          <Text style={styles.unitLabel}>重量單位</Text>
-          <Pressable
-          onPress={() => handleToggleUnit()}
-          style={styles.unitBadge}
-          >
-            <Text style={styles.unitBadgeText}>{selectedUnitLabel}</Text>
-          </Pressable>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+        <Stack.Screen options={{ title: exersiceName ?? "運動項目"}}/>
+        <View style={styles.header}>
+          <Text style={styles.title}>訓練內容</Text>
+          <View style={styles.unitRow}>
+            <Text style={styles.unitLabel}>重量單位</Text>
+            <Pressable
+            onPress={() => handleToggleUnit()}
+            style={styles.unitBadge}
+            >
+              <Text style={styles.unitBadgeText}>{selectedUnitLabel}</Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
-      <TextInput
-        value={value.name}
-        onChangeText={(text) => updateField("name", text)}
-        placeholder="運動名稱"
-        style={styles.input}
-      />
+        <TextInput
+          value={value.name}
+          onChangeText={(text) => updateField("name", text)}
+          placeholder="運動名稱"
+          style={styles.input}
+        />
 
-      <View style={styles.imageRow}>
-        {value.imageUri ? (
-          <Image source={{ uri: value.imageUri }} style={styles.image} />
-        ) : (
-          <View style={styles.placeholder}>
-            <Image source={placeholderImage} style={styles.placeholderImage} />
-            <Text style={styles.placeholderText}>尚未新增照片</Text>
-          </View>
-        )}
-        <TouchableOpacity onPress={onPickImage} style={styles.imageButton}>
-          <Text style={styles.imageButtonText}>新增照片</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.setHeader}>
-        <Text style={styles.sectionTitle}>每組紀錄</Text>
-        <TouchableOpacity onPress={handleAddSet} style={styles.addButton}>
-          <Text style={styles.addButtonText}>+ 新增一列</Text>
-        </TouchableOpacity>
-      </View>
-
-      {value.setRows.map((row, index) => (
-        <View key={row.id} style={styles.setRow}>
-          <View style={styles.setIndex}>
-            <Text style={styles.setIndexText}>{index + 1}</Text>
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>次數</Text>
-            <TextInput
-              value={row.reps}
-              onChangeText={(text) => updateSetRow(row.id, "reps", text)}
-              placeholder="0"
-              keyboardType="numeric"
-              style={styles.input}
-            />
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>重量</Text>
-            <TextInput
-              value={row.weight}
-              onChangeText={(text) => updateSetRow(row.id, "weight", text)}
-              placeholder="0"
-              keyboardType="numeric"
-              style={styles.input}
-            />
-          </View>
-        <TouchableOpacity onPress={() => handleDeleteSet(row.id)} style={styles.deleteButton}>
-          <Text style={styles.deleteButtonText}>-</Text>
-        </TouchableOpacity>
+        <View style={styles.imageRow}>
+          {value.imageUri ? (
+            <Image source={{ uri: value.imageUri }} style={styles.image} />
+          ) : (
+            <View style={styles.placeholder}>
+              <Image source={placeholderImage} style={styles.placeholderImage} />
+              <Text style={styles.placeholderText}>尚未新增照片</Text>
+            </View>
+          )}
+          <TouchableOpacity onPress={onPickImage} style={styles.imageButton}>
+            <Text style={styles.imageButtonText}>新增照片</Text>
+          </TouchableOpacity>
         </View>
-      ))}
 
-      <Modal
-        visible={isUnitModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setUnitModalVisible(false)}
-      >
-        <Pressable
-          style={styles.modalBackdrop}
-          onPress={() => setUnitModalVisible(false)}
+        <View style={styles.setHeader}>
+          <Text style={styles.sectionTitle}>每組紀錄</Text>
+          <TouchableOpacity onPress={handleAddSet} style={styles.addButton}>
+            <Text style={styles.addButtonText}>+ 新增一列</Text>
+          </TouchableOpacity>
+        </View>
+
+        {value.setRows.map((row, index) => (
+          <View key={row.id} style={styles.setRow}>
+            <View style={styles.setIndex}>
+              <Text style={styles.setIndexText}>{index + 1}</Text>
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.label}>次數</Text>
+              <TextInput
+                value={row.reps}
+                onChangeText={(text) => updateSetRow(row.id, "reps", text)}
+                placeholder="0"
+                keyboardType="numeric"
+                style={styles.input}
+              />
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.label}>重量</Text>
+              <TextInput
+                value={row.weight}
+                onChangeText={(text) => updateSetRow(row.id, "weight", text)}
+                placeholder="0"
+                keyboardType="numeric"
+                style={styles.input}
+              />
+            </View>
+          <TouchableOpacity onPress={() => handleDeleteSet(row.id)} style={styles.deleteButton}>
+            <Text style={styles.deleteButtonText}>-</Text>
+          </TouchableOpacity>
+          </View>
+        ))}
+
+        <Modal
+          visible={isUnitModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setUnitModalVisible(false)}
         >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>選擇單位</Text>
-            {UNIT_OPTIONS.map((option) => (
-              <TouchableOpacity
-                key={option}
-                onPress={() => {
-                  handleToggleUnit();
-                  setUnitModalVisible(false);
-                }}
-                style={styles.modalOption}
-              >
-                <Text style={styles.modalOptionText}>{option}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </Pressable>
-      </Modal>
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setUnitModalVisible(false)}
+          >
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>選擇單位</Text>
+              {UNIT_OPTIONS.map((option) => (
+                <TouchableOpacity
+                  key={option}
+                  onPress={() => {
+                    handleToggleUnit();
+                    setUnitModalVisible(false);
+                  }}
+                  style={styles.modalOption}
+                >
+                  <Text style={styles.modalOptionText}>{option}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </Pressable>
+        </Modal>
+      </ScrollView>
+      <Pressable
+      onPress={() => handleSave()}
+      style={styles.saveButton}>
+        <Text style={styles.saveText}>儲存</Text>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
   unitRow: {
     width: '40%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  saveButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    height: '5%',
+    width: '100%',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  saveText: {
+    color: '#3d3935',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
   unitLabel: {
     marginRight: 8,
   },
-  mainContainer: {
+  contentContainer: {
     padding: 16,
+    paddingBottom: '5%',
     shadowColor: "#000",
     elevation: 3,
     gap: 12,
