@@ -5,7 +5,10 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView
+        style={styles.safeArea}
+        edges={["left", "right", "bottom"]}
+      >
         <Stack>
           <Stack.Screen name="index" options={{ title: "?????" }} />
         </Stack>
