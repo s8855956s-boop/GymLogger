@@ -135,9 +135,17 @@ const handleSave = () => {
   router.back();
 };
 
+  const saveButtonHeight = 56;
+
   return (
     <View style={styles.mainContainer}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.contentContainer,
+          { paddingBottom: saveButtonHeight + 16 },
+        ]}
+      >
         <Stack.Screen options={{ title: exersiceName ?? "運動項目"}}/>
         <View style={styles.header}>
           <Text style={styles.title}>訓練內容</Text>
@@ -240,7 +248,10 @@ const handleSave = () => {
       </ScrollView>
       <Pressable
       onPress={() => handleSave()}
-      style={styles.saveButton}>
+      style={[
+        styles.saveButton,
+        { height: saveButtonHeight },
+      ]}>
         <Text style={styles.saveText}>儲存</Text>
       </Pressable>
     </View>
@@ -266,7 +277,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
-    height: '5%',
     width: '100%',
     position: 'absolute',
     left: 0,
@@ -283,7 +293,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 16,
-    paddingBottom: '5%',
     shadowColor: "#000",
     elevation: 3,
     gap: 12,
