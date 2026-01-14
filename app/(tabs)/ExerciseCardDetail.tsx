@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Image,
   Modal,
@@ -37,7 +37,7 @@ export default function ExerciseCardDetail({
   value: valueProp,
 }: ExerciseCardDetailProps) {
   const router = useRouter();
-  const { value: valueParam, name: exersiceName } = useLocalSearchParams<{ value?: string, name?: string }>();
+  const { value: valueParam, name } = useLocalSearchParams<{ value?: string, name?: string }>();
   const initialValue = useMemo(() => {
     if (valueProp) {
       return valueProp;
@@ -65,6 +65,11 @@ export default function ExerciseCardDetail({
   }, [valueParam, valueProp]);
 
   const [value, setValue] = useState<ExerciseValue>(initialValue);
+  const [exerciseName, setExerciseName] = useState(name ?? "運動項目");
+
+  useEffect(() => {
+    setExerciseName(typeof value.name === "string" && value.name.trim().length === 0 ? "運動項目" : value.name);
+  }, [value])
 
   const handleExerciseChange = (nextValue: ExerciseValue) => {
     setValue(nextValue);
@@ -139,14 +144,13 @@ const handleSave = () => {
 
   return (
     <View style={styles.mainContainer}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
+      <ScrollView style={styles.scrollView}
+      contentContainerStyle={[
           styles.contentContainer,
           { paddingBottom: saveButtonHeight + 16 },
         ]}
-      >
-        <Stack.Screen options={{ title: exersiceName ?? "運動項目"}}/>
+        >
+        <Stack.Screen options={{ title: exerciseName}}/>
         <View style={styles.header}>
           <Text style={styles.title}>訓練內容</Text>
           <View style={styles.unitRow}>
