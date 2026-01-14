@@ -1,6 +1,7 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  Alert,
   Image,
   Modal,
   Pressable,
@@ -11,23 +12,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { initDb, saveExercise } from "../db";
+import type { ExerciseValue, SetRow } from "../types";
 
 const placeholderImage = require("../../assets/images/react-logo.png");
 
 const UNIT_OPTIONS = ["公斤", "磅"];
-
-export type ExerciseValue = {
-  name: string;
-  unit: string | null;
-  imageUri?: string | null;
-  setRows: SetRow[];
-};
-
-type SetRow = {
-  id: string;
-  reps: string;
-  weight: string;
-};
 
 type ExerciseCardDetailProps = {
   value?: ExerciseValue;
@@ -37,35 +27,54 @@ export default function ExerciseCardDetail({
   value: valueProp,
 }: ExerciseCardDetailProps) {
   const router = useRouter();
-  const { value: valueParam, name } = useLocalSearchParams<{ value?: string, name?: string }>();
+  const { value: valueParam, name, programId, exerciseId } = useLocalSearchParams<{
+    value?: string;
+    name?: string;
+    programId?: string;
+    exerciseId?: string;
+  }>();
+  const resolvedProgramId = typeof programId === "string" ? programId : undefined;
+  const resolvedExerciseId =
+    typeof exerciseId === "string" ? exerciseId : undefined;
   const initialValue = useMemo(() => {
+    const applyExerciseId = (base: ExerciseValue) => {
+      if (resolvedExerciseId && !base.id) {
+        return { ...base, id: resolvedExerciseId };
+      }
+      return base;
+    };
+
     if (valueProp) {
-      return valueProp;
+      return applyExerciseId(valueProp);
     }
 
     if (typeof valueParam === "string") {
       try {
-        return JSON.parse(valueParam) as ExerciseValue;
+        return applyExerciseId(JSON.parse(valueParam) as ExerciseValue);
       } catch {
-        return {
+        return applyExerciseId({
           name: "",
           unit: null,
           imageUri: null,
           setRows: [],
-        };
+        });
       }
     }
 
-    return {
+    return applyExerciseId({
       name: "",
       unit: null,
       imageUri: null,
       setRows: [],
-    };
-  }, [valueParam, valueProp]);
+    });
+  }, [valueParam, valueProp, resolvedExerciseId]);
 
   const [value, setValue] = useState<ExerciseValue>(initialValue);
   const [exerciseName, setExerciseName] = useState(name ?? "運動項目");
+
+  useEffect(() => {
+    initDb();
+  }, []);
 
   useEffect(() => {
     setExerciseName(typeof value.name === "string" && value.name.trim().length === 0 ? "運動項目" : value.name);
@@ -137,6 +146,12 @@ export default function ExerciseCardDetail({
 const onPickImage = () => console.log("pick image");
 
 const handleSave = () => {
+  if (!resolvedProgramId) {
+    Alert.alert("Missing program", "Please open this screen from a program.");
+    return;
+  }
+  const savedId = saveExercise(resolvedProgramId, value);
+  setValue((prev) => ({ ...prev, id: savedId }));
   router.back();
 };
 

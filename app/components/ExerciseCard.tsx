@@ -1,5 +1,5 @@
 import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from "react-native";
-import { ExerciseValue } from "../(tabs)/ExerciseCardDetail";
+import type { ExerciseValue } from "../types";
 
 type ExerciseCardProps = {
   value: ExerciseValue;

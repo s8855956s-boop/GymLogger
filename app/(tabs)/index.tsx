@@ -65,7 +65,9 @@ export default function Index() {
 
   const handleDatePress = (dateString: string) => {
     setSelectedDate(dateString);
-    console.log("date pressed", dateString);
+    router.push({
+      pathname: "/(tabs)/ExerciseProgramDetail"
+    })
   };
 
   return (

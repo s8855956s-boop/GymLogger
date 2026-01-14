@@ -1,177 +1,140 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { Alert, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ExerciseCard from "../components/ExerciseCard";
-import { ExerciseValue } from "./ExerciseCardDetail";
-
-type Program = {
-  id: string;
-  exercises: ExerciseValue[];
-};
-
-const exercises1 : ExerciseValue[] = [
-  {
-    name: "深蹲",
-    unit: "公斤",
-    imageUri: null,
-    setRows: [{id: "set-1", reps: "8", weight: "60"},
-      {id: "set-2", reps: "7", weight: "60"},
-    {id: "set-3", reps: "8", weight: "50"}],
-  },
-  {
-    name: "Zercher Squat",
-    unit: "公斤",
-    imageUri: null,
-    setRows: [{id: "set-1", reps: "8", weight: "60"},
-      {id: "set-2", reps: "8", weight: "60"},
-    {id: "set-3", reps: "8", weight: "60"}],
-  },
-  {
-    name: "Leg Press",
-    unit: "磅",
-    imageUri: null,
-    setRows: [{id: "set-1", reps: "8", weight: "60"}],
-  }
-];
-
-const exercises2 : ExerciseValue[] = [
-  {
-    name: "臥推",
-    unit: "公斤",
-    imageUri: null,
-    setRows: [{id: "set-1", reps: "5", weight: "60"},
-      {id: "set-2", reps: "5", weight: "60"},
-    {id: "set-3", reps: "5", weight: "60"}],
-  },
-  {
-    name: "上斜啞鈴臥推",
-    unit: "公斤",
-    imageUri: null,
-    setRows: [{id: "set-1", reps: "8", weight: "20"},
-      {id: "set-2", reps: "8", weight: "20"},
-    {id: "set-3", reps: "8", weight: "20"}],
-  },
-  {
-    name: "雙槓撐體",
-    unit: "磅",
-    imageUri: null,
-    setRows: [{id: "set-1", reps: "8", weight: "80"}],
-  }
-];
-
-const programs : Program[] = [
-    {
-        id: "1",
-        exercises: exercises1,
-    },
-    {
-        id: "2",
-        exercises: exercises2,
-    }
-]
+import { deleteExercise, getExercisesByProgramId, initDb } from "../db";
+import type { ExerciseValue } from "../types";
 
 type ExerciseProgramDetailProps = {
-    id: string;
-}
+  id?: string;
+};
 
 export default function ExerciseProgramDetail({
-    id: idProp,
+  id: idProp,
 }: ExerciseProgramDetailProps) {
-    const router = useRouter();
-      const { id: idParam, name: programName } = useLocalSearchParams<{ id?: string, name?: string }>();
-      const exercises = useMemo<ExerciseValue[]>(() => {
-        if (idProp) {
-            const program = programs.find(v => v.id === idProp);
-            if(program != null && program !== undefined){
-                return program.exercises;
-            } else {
-                return [];
-            }
-        }
-    
-        if (typeof idParam === "string") {
-          try {
-            const program = programs.find(v => v.id === idParam);
-            if(program != null && program !== undefined){
-                return program.exercises;
-            } else {
-                return [];
-            }
-          } catch {
-            return [];
-          }
-        }
-    
-        return [];
-      }, [idParam, idProp]);
-
-    const handlePress = (exercise: ExerciseValue,) => {
-        router.push({
-            pathname: "/ExerciseCardDetail",
-            params: { value: JSON.stringify(exercise), name: exercise.name },
-        });
-    };
-
-    const handleAdd = () => {
-        router.push({
-            pathname: "/ExerciseCardDetail",
-        });
+  const router = useRouter();
+  const { id: idParam, name: programName } = useLocalSearchParams<{
+    id?: string;
+    name?: string;
+  }>();
+  const programId =
+    typeof idProp === "string" && idProp.length > 0
+      ? idProp
+      : typeof idParam === "string"
+      ? idParam
+      : undefined;
+  const [exercises, setExercises] = useState<ExerciseValue[]>([]);
+  const loadExercises = useCallback(() => {
+    if (!programId) {
+      setExercises([]);
+      return;
     }
+    setExercises(getExercisesByProgramId(programId));
+  }, [programId]);
 
-    const handleDeleteExercise = () => {
-      Alert.alert(
-        "確認刪除",
-        "確定要刪除此動作嗎？",
-        [
-          { text: "取消", style: "cancel" },
-          {
-            text: "刪除",
-            style: "destructive",
-            onPress: () => {
-              // TODO: 執行刪除邏輯
-              console.log("delete confirmed");
-            },
+  useEffect(() => {
+    initDb();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadExercises();
+    }, [loadExercises])
+  );
+
+  const handlePress = (exercise: ExerciseValue) => {
+    if (!programId) {
+      return;
+    }
+    router.push({
+      pathname: "/ExerciseCardDetail",
+      params: {
+        value: JSON.stringify(exercise),
+        name: exercise.name,
+        programId,
+        exerciseId: exercise.id ?? "",
+      },
+    });
+  };
+
+  const handleAdd = () => {
+    if (!programId) {
+      Alert.alert("Missing program", "Please pick a program first.");
+      return;
+    }
+    router.push({
+      pathname: "/ExerciseCardDetail",
+      params: { programId },
+    });
+  };
+
+  const handleDeleteExercise = (exerciseId?: string) => {
+    if (!exerciseId) {
+      return;
+    }
+    Alert.alert(
+      "Confirm delete",
+      "Delete this exercise?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            deleteExercise(exerciseId);
+            loadExercises();
           },
-        ],
-        { cancelable: true }
-      );
-    }
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
-    return (
+  return (
     <View style={styles.mainContainer}>
       <TouchableOpacity style={styles.addButton} onPress={() => handleAdd()}>
         <Text style={styles.addButtonText}>+</Text>
       </TouchableOpacity>
-    <Stack.Screen options={{ title: programName ?? "課表"}}/>
-        {exercises.map((row, index) => (
-            <Pressable key={index} onPress={() => handlePress(row)}>
-                <ExerciseCard value={ row } isProgram={true} parentStyle={styles.exerciseCard} handleDelete={() => handleDeleteExercise()}/>
-            </Pressable>
-        ))}
-    </View>);
+      <Stack.Screen options={{ title: programName ?? "Program" }} />
+      {exercises.map((row, index) => (
+        <Pressable
+          key={row.id ?? `${row.name}-${index}`}
+          onPress={() => handlePress(row)}
+        >
+          <ExerciseCard
+            value={row}
+            isProgram={true}
+            parentStyle={styles.exerciseCard}
+            handleDelete={() => handleDeleteExercise(row.id)}
+          />
+        </Pressable>
+      ))}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    mainContainer: {
-        marginTop: 10,
-        gap: 10,
-        paddingHorizontal: 16,
-    },
-    exerciseCard: {
-        gap: 10,
-    },
-    addButton: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: "#111827",
-    },
-    addButtonText: {
-      color: "#FFFFFF",
-      fontSize: 22,
-      fontWeight: "700",
-      lineHeight: 22,
-    },
+  mainContainer: {
+    marginTop: 10,
+    gap: 10,
+    paddingHorizontal: 16,
+  },
+  exerciseCard: {
+    gap: 10,
+  },
+  addButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#111827",
+  },
+  addButtonText: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontWeight: "700",
+    lineHeight: 22,
+  },
 });

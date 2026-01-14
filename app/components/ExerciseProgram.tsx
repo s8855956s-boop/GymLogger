@@ -23,7 +23,7 @@ export default function ExerciseProgram({ value } : ExerciseProgramProps) {
         <View style={styles.mainContainer}>
             <Pressable onPress={() => handlePress(value.id, value.name)}>
             <View style={styles.card}>
-                <Text style={styles.title}>{value.name || "未命名Program"}</Text>
+                <Text style={styles.title}>{value.name || "New Program"}</Text>
             </View>
         </Pressable>
         </View>
