@@ -1,13 +1,14 @@
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
+import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from "react-native";
 import { ExerciseValue } from "../(tabs)/ExerciseCardDetail";
 
 type ExerciseCardProps = {
   value: ExerciseValue;
   isProgram?: boolean;
   parentStyle?: StyleProp<ViewStyle>;
+  handleDelete?: () => void;
 };
 
-export default function ExerciseCard({ value, isProgram = false, parentStyle }: ExerciseCardProps) {
+export default function ExerciseCard({ value, isProgram = false, parentStyle, handleDelete }: ExerciseCardProps) {
   const setsAreIdentical = () => {
     const repsOfSets: string[] = [];
     const weightsOfSets: string[] = [];
@@ -47,7 +48,12 @@ export default function ExerciseCard({ value, isProgram = false, parentStyle }: 
 
   return (
     <View style={[styles.card, parentStyle]}>
-      <Text style={styles.title}>{value.name || "未命名動作"}</Text>
+      <View style={styles.exerciseHeader}>
+        <Text style={styles.title}>{value.name || "未命名動作"}</Text>
+        <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete?.()}>
+          <Text style={styles.addButtonText}>刪除</Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.rows}>
         {isProgram ? renderProgramSummary() : <></>}
@@ -132,5 +138,24 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     color: "#6B7280",
+  },
+    deleteButton: {
+      width: 64,
+      height: 24,
+      borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#e71010",
+    },
+    addButtonText: {
+      color: "#FFFFFF",
+      fontSize: 16,
+      fontWeight: "700",
+      lineHeight: 22,
+    },
+  exerciseHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
   },
 });

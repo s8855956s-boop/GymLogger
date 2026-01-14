@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ExerciseCard from "../components/ExerciseCard";
 import { ExerciseValue } from "./ExerciseCardDetail";
 
@@ -118,6 +118,25 @@ export default function ExerciseProgramDetail({
         });
     }
 
+    const handleDeleteExercise = () => {
+      Alert.alert(
+        "確認刪除",
+        "確定要刪除此動作嗎？",
+        [
+          { text: "取消", style: "cancel" },
+          {
+            text: "刪除",
+            style: "destructive",
+            onPress: () => {
+              // TODO: 執行刪除邏輯
+              console.log("delete confirmed");
+            },
+          },
+        ],
+        { cancelable: true }
+      );
+    }
+
     return (
     <View style={styles.mainContainer}>
       <TouchableOpacity style={styles.addButton} onPress={() => handleAdd()}>
@@ -126,7 +145,7 @@ export default function ExerciseProgramDetail({
     <Stack.Screen options={{ title: programName ?? "課表"}}/>
         {exercises.map((row, index) => (
             <Pressable key={index} onPress={() => handlePress(row)}>
-                <ExerciseCard value={ row } isProgram={true} parentStyle={styles.exerciseCard}/>
+                <ExerciseCard value={ row } isProgram={true} parentStyle={styles.exerciseCard} handleDelete={() => handleDeleteExercise()}/>
             </Pressable>
         ))}
     </View>);
