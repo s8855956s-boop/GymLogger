@@ -3,7 +3,7 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ExerciseCard from "../components/ExerciseCard";
-import { deleteExercise, getExercisesByProgramId, initDb } from "../db";
+import { deleteExercise, getProgramExercisesByProgramId, initDb } from "../db";
 import type { ProgramExercise } from "../types";
 
 type ExerciseProgramDetailProps = {
@@ -30,7 +30,7 @@ export default function ExerciseProgramDetail({
       setExercises([]);
       return;
     }
-    setExercises(getExercisesByProgramId(programId));
+    setExercises(getProgramExercisesByProgramId(programId));
   }, [programId]);
 
   useEffect(() => {
