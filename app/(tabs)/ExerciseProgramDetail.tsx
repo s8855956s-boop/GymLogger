@@ -1,10 +1,10 @@
+import { useFocusEffect } from "@react-navigation/native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { useFocusEffect } from "@react-navigation/native";
 import { Alert, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ExerciseCard from "../components/ExerciseCard";
 import { deleteExercise, getExercisesByProgramId, initDb } from "../db";
-import type { ExerciseValue } from "../types";
+import type { ProgramExercise } from "../types";
 
 type ExerciseProgramDetailProps = {
   id?: string;
@@ -24,7 +24,7 @@ export default function ExerciseProgramDetail({
       : typeof idParam === "string"
       ? idParam
       : undefined;
-  const [exercises, setExercises] = useState<ExerciseValue[]>([]);
+  const [exercises, setExercises] = useState<ProgramExercise[]>([]);
   const loadExercises = useCallback(() => {
     if (!programId) {
       setExercises([]);
@@ -43,7 +43,7 @@ export default function ExerciseProgramDetail({
     }, [loadExercises])
   );
 
-  const handlePress = (exercise: ExerciseValue) => {
+  const handlePress = (exercise: ProgramExercise) => {
     if (!programId) {
       return;
     }

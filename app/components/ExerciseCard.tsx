@@ -1,8 +1,8 @@
 import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from "react-native";
-import type { ExerciseValue } from "../types";
+import type { ProgramExercise } from "../types";
 
 type ExerciseCardProps = {
-  value: ExerciseValue;
+  value: ProgramExercise;
   isProgram?: boolean;
   parentStyle?: StyleProp<ViewStyle>;
   handleDelete?: () => void;
@@ -10,11 +10,15 @@ type ExerciseCardProps = {
 
 export default function ExerciseCard({ value, isProgram = false, parentStyle, handleDelete }: ExerciseCardProps) {
   const setsAreIdentical = () => {
-    const repsOfSets: string[] = [];
-    const weightsOfSets: string[] = [];
+    const repsOfSets: (number)[] = [];
+    const weightsOfSets: number[] = [];
     value.setRows.map((row) => {
-      repsOfSets.push(row.reps);
+      if(row.reps !== undefined){
+        repsOfSets.push(row.reps);
+      }
+      if(row.weight !== undefined){
       weightsOfSets.push(row.weight);
+      }
     });
 
     const repsOfFirst = repsOfSets.find(v => v != null);

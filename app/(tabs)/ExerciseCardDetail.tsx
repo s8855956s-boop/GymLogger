@@ -13,14 +13,14 @@ import {
   View,
 } from "react-native";
 import { initDb, saveExercise } from "../db";
-import type { ExerciseValue, SetRow } from "../types";
+import type { ProgramExercise, ProgramExerciseSet } from "../types";
 
 const placeholderImage = require("../../assets/images/react-logo.png");
 
 const UNIT_OPTIONS = ["公斤", "磅"];
 
 type ExerciseCardDetailProps = {
-  value?: ExerciseValue;
+  value?: ProgramExercise;
 };
 
 export default function ExerciseCardDetail({
@@ -37,7 +37,7 @@ export default function ExerciseCardDetail({
   const resolvedExerciseId =
     typeof exerciseId === "string" ? exerciseId : undefined;
   const initialValue = useMemo(() => {
-    const applyExerciseId = (base: ExerciseValue) => {
+    const applyExerciseId = (base: ProgramExercise) => {
       if (resolvedExerciseId && !base.id) {
         return { ...base, id: resolvedExerciseId };
       }
@@ -50,9 +50,11 @@ export default function ExerciseCardDetail({
 
     if (typeof valueParam === "string") {
       try {
-        return applyExerciseId(JSON.parse(valueParam) as ExerciseValue);
+        return applyExerciseId(JSON.parse(valueParam) as ProgramExercise);
       } catch {
         return applyExerciseId({
+          id: "",
+          programId: "",
           name: "",
           unit: null,
           imageUri: null,
@@ -62,14 +64,16 @@ export default function ExerciseCardDetail({
     }
 
     return applyExerciseId({
-      name: "",
-      unit: null,
-      imageUri: null,
-      setRows: [],
+          id: "",
+          programId: "",
+          name: "",
+          unit: null,
+          imageUri: null,
+          setRows: [],
     });
   }, [valueParam, valueProp, resolvedExerciseId]);
 
-  const [value, setValue] = useState<ExerciseValue>(initialValue);
+  const [value, setValue] = useState<ProgramExercise>(initialValue);
   const [exerciseName, setExerciseName] = useState(name ?? "運動項目");
 
   useEffect(() => {
@@ -80,7 +84,7 @@ export default function ExerciseCardDetail({
     setExerciseName(typeof value.name === "string" && value.name.trim().length === 0 ? "運動項目" : value.name);
   }, [value])
 
-  const handleExerciseChange = (nextValue: ExerciseValue) => {
+  const handleExerciseChange = (nextValue: ProgramExercise) => {
     setValue(nextValue);
   };
 
@@ -94,9 +98,9 @@ export default function ExerciseCardDetail({
     return UNIT_OPTIONS[0] ?? "選擇單位";
   }, [value.unit]);
 
-  const updateField = <Key extends keyof ExerciseValue>(
+  const updateField = <Key extends keyof ProgramExercise>(
     key: Key,
-    fieldValue: ExerciseValue[Key]
+    fieldValue: ProgramExercise[Key]
   ) => {
     handleExerciseChange({
       ...value,
@@ -105,10 +109,10 @@ export default function ExerciseCardDetail({
   };
 
   const handleAddSet = () => {
-    const newSet: SetRow = {
+    const newSet: ProgramExerciseSet = {
       id: `set-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      reps: "",
-      weight: "",
+      reps: undefined,
+      weight: undefined,
     };
 
     updateField("setRows", [...value.setRows, newSet]);
@@ -214,7 +218,7 @@ const handleSave = () => {
             <View style={styles.field}>
               <Text style={styles.label}>次數</Text>
               <TextInput
-                value={row.reps}
+                value={row.reps == null ? "" : String(row.reps)}
                 onChangeText={(text) => updateSetRow(row.id, "reps", text)}
                 placeholder="0"
                 keyboardType="numeric"
@@ -224,7 +228,7 @@ const handleSave = () => {
             <View style={styles.field}>
               <Text style={styles.label}>重量</Text>
               <TextInput
-                value={row.weight}
+                value={row.weight == null ? "" : String(row.weight)}
                 onChangeText={(text) => updateSetRow(row.id, "weight", text)}
                 placeholder="0"
                 keyboardType="numeric"
