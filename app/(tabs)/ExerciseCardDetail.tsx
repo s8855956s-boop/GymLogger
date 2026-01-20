@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { initDb, saveExercise } from "../db";
+import { createId, initDb, saveExercise, saveTraningDayLog } from "../db";
 import type { ProgramExercise, ProgramExerciseSet } from "../types";
 
 const placeholderImage = require("../../assets/images/react-logo.png");
@@ -27,12 +27,14 @@ export default function ExerciseCardDetail({
   value: valueProp,
 }: ExerciseCardDetailProps) {
   const router = useRouter();
-  const { value: valueParam, name, programId, exerciseId } = useLocalSearchParams<{
+  const { value: valueParam, name, programId, exerciseId, isLog: isLogParam } = useLocalSearchParams<{
     value?: string;
     name?: string;
     programId?: string;
     exerciseId?: string;
+    isLog?: string;
   }>();
+  const isLog = isLogParam === undefined ? true : isLogParam === "true";
   const resolvedProgramId = typeof programId === "string" ? programId : undefined;
   const resolvedExerciseId =
     typeof exerciseId === "string" ? exerciseId : undefined;
@@ -77,7 +79,7 @@ export default function ExerciseCardDetail({
   const [exerciseName, setExerciseName] = useState(name ?? "運動項目");
 
   useEffect(() => {
-    initDb();
+    void initDb();
   }, []);
 
   useEffect(() => {
@@ -149,13 +151,19 @@ export default function ExerciseCardDetail({
 
 const onPickImage = () => console.log("pick image");
 
-const handleSave = () => {
-  if (!resolvedProgramId) {
-    Alert.alert("Missing program", "Please open this screen from a program.");
-    return;
+const handleSave = async () => {
+  if(isLog){
+  const trainingLogId = createId("trainingDayLog");
+  await saveTraningDayLog({id: trainingLogId, date: new Date(), exerciseLogs: [{id: createId("exerciseLog"), trainingLogId: trainingLogId, name: value.name, unit: value.unit, imageUri: value.imageUri, sets: value.setRows}]});
+  } else {
+    if (!resolvedProgramId) {
+      Alert.alert("Missing program", "Please open this screen from a program.");
+      return;
+    }
+    const savedId = await saveExercise(value);
+    setValue((prev) => ({ ...prev, id: savedId }));
+    router.back();
   }
-  const savedId = saveExercise(resolvedProgramId, value);
-  setValue((prev) => ({ ...prev, id: savedId }));
   router.back();
 };
 
@@ -270,7 +278,7 @@ const handleSave = () => {
         </Modal>
       </ScrollView>
       <Pressable
-      onPress={() => handleSave()}
+      onPress={() => void handleSave()}
       style={[
         styles.saveButton,
         { height: saveButtonHeight },

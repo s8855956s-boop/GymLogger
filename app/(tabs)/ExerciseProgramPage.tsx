@@ -9,33 +9,33 @@ import type { ExerciseProgramValue } from "../types";
 export default function ExerciseProgramPage() {
   const [programs, setPrograms] = useState<ExerciseProgramValue[]>([]);
 
-  const loadPrograms = useCallback(() => {
-    setPrograms(listPrograms());
+  const loadPrograms = useCallback(async () => {
+    setPrograms(await listPrograms());
   }, []);
 
   useEffect(() => {
-    initDb();
+    void initDb();
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      loadPrograms();
+      void loadPrograms();
     }, [loadPrograms])
   );
 
-  const handleAdd = () => {
-    const program = createProgram("New Program");
+  const handleAdd = async () => {
+    const program = await createProgram("New Program");
     router.push({
       pathname: "/ExerciseProgramDetail",
       params: { id: program.id, name: program.name },
     });
-    loadPrograms();
+    await loadPrograms();
   };
 
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: "Programs" }} />
-      <TouchableOpacity style={styles.addButton} onPress={() => handleAdd()}>
+      <TouchableOpacity style={styles.addButton} onPress={() => void handleAdd()}>
         <Text style={styles.addButtonText}>+</Text>
       </TouchableOpacity>
       <View style={styles.rows}>

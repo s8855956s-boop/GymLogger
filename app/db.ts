@@ -1,18 +1,20 @@
 import * as SQLite from "expo-sqlite";
-import type { ExerciseLog, ProgramExercise, SetLog, TrainingDayLog } from "./types";
+import type { ExerciseLog, ExerciseProgramValue, ProgramExercise, SetLog, TrainingDayLog } from "./types";
 
-const db = SQLite.openDatabaseSync("gymlogger.db");
-
-const createId = (prefix: string) =>
-  `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-
-export type ProgramRow = {
-  id: string;
-  name: string;
+let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
+const getDb = () => {
+  if (!dbPromise) {
+    dbPromise = SQLite.openDatabaseAsync("gymlogger.db");
+  }
+  return dbPromise;
 };
 
-export const initDb = () => {
-  db.execSync(`
+export const createId = (prefix: string) =>
+  `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+export const initDb = async () => {
+  const db = await getDb();
+  await db.execAsync(`
     PRAGMA journal_mode = WAL;
     CREATE TABLE IF NOT EXISTS program (
       id TEXT PRIMARY KEY NOT NULL,
@@ -51,7 +53,7 @@ export const initDb = () => {
       training_log_id TEXT,
       name TEXT NOT NULL,
       unit TEXT,
-      imageUri TEXT;
+      image_uri TEXT,
       create_time INTEGER NOT NULL,
       update_time INTEGER NOT NULL
     );
@@ -64,25 +66,33 @@ export const initDb = () => {
   `);
 };
 
-export const listPrograms = (): ProgramRow[] =>
-  db.getAllSync("SELECT id, name FROM programs ORDER BY create_time DESC") as ProgramRow[];
+export const listPrograms = async (): Promise<ExerciseProgramValue[]> => {
+  const db = await getDb();
+  return (await db.getAllAsync(
+    "SELECT id, name FROM program ORDER BY create_time DESC;"
+  )) as ExerciseProgramValue[];
+};
 
-export const createProgram = (name: string): ProgramRow => {
+export const createProgram = async (name: string): Promise<ExerciseProgramValue> => {
+  const db = await getDb();
   const id = createId("program");
-  db.runSync("INSERT INTO programs (id, name, create_time, update_time) VALUES (?, ?, ?)", [
+  await db.runAsync("INSERT INTO program (id, name, create_time, update_time) VALUES (?, ?, ?)", [
     id,
     name,
     Date.now(),
     Date.now(),
   ]);
-  return { id, name };
+  return { id, name, };
 };
 
-export const getProgramExercisesByProgramId = (programId: string): ProgramExercise[] => {
-  const exercises = db.getAllSync(
+export const getProgramExercisesByProgramId = async (
+  programId: string
+): Promise<ProgramExercise[]> => {
+  const db = await getDb();
+  const exercises = (await db.getAllAsync(
     "SELECT id, programId, name, unit, image_uri FROM exercises WHERE program_id = ? ORDER BY create_time DESC",
     [programId]
-  ) as {
+  )) as {
     id: string;
     programId: string;
     name: string;
@@ -94,13 +104,13 @@ export const getProgramExercisesByProgramId = (programId: string): ProgramExerci
   const setRows =
     exerciseIds.length === 0
       ? []
-      : (db.getAllSync(
+      : ((await db.getAllAsync(
           `SELECT id, exercise_id AS exerciseId, reps, weight
            FROM sets
            WHERE exercise_id IN (${exerciseIds.map(() => "?").join(", ")})
            ORDER BY position ASC`,
           exerciseIds
-        ) as {
+        )) as {
           id: string;
           exerciseId?: string;
           reps?: number;
@@ -126,23 +136,26 @@ export const getProgramExercisesByProgramId = (programId: string): ProgramExerci
   });
 };
 
-export const saveExercise = (programId: string, value: ProgramExercise): string => {
+export const saveExercise = async (
+  value: ProgramExercise
+): Promise<string> => {
+  const db = await getDb();
   const exerciseId = value.id ?? createId("exercise");
-  const existing = db.getFirstSync("SELECT id FROM exercises WHERE id = ?", [
+  const existing = (await db.getFirstAsync("SELECT id FROM exercises WHERE id = ?", [
     exerciseId,
-  ]) as { id: string } | undefined;
+  ])) as { id: string } | undefined;
 
   if (existing) {
-    db.runSync(
+    await db.runAsync(
       "UPDATE exercises SET name = ?, unit = ?, image_uri = ?, update_time WHERE id = ?",
       [value.name, value.unit, value.imageUri ?? null, Date.now(), exerciseId]
     );
   } else {
-    db.runSync(
+    await db.runAsync(
       "INSERT INTO exercises (id, program_id, name, unit, image_uri, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?)",
       [
         exerciseId,
-        programId,
+        value.programId,
         value.name,
         value.unit,
         value.imageUri ?? null,
@@ -152,26 +165,28 @@ export const saveExercise = (programId: string, value: ProgramExercise): string 
     );
   }
 
-  db.runSync("DELETE FROM sets WHERE exercise_id = ?", [exerciseId]);
-  value.setRows.forEach((row, index) => {
+  await db.runAsync("DELETE FROM sets WHERE exercise_id = ?", [exerciseId]);
+  await Promise.all(value.setRows.map(async (row, index) => {
     const setId = row.id || createId("set");
-    db.runSync(
+    await db.runAsync(
       "INSERT INTO sets (id, exercise_id, reps, weight, position) VALUES (?, ?, ?, ?, ?)",
       [setId, exerciseId, row.reps ?? "", row.weight ?? "", index]
     );
-  });
+  }));
 
   return exerciseId;
 };
 
-export const deleteExercise = (exerciseId: string) => {
-  db.runSync("DELETE FROM sets WHERE exercise_id = ?", [exerciseId]);
-  db.runSync("DELETE FROM exercises WHERE id = ?", [exerciseId]);
+export const deleteExercise = async (exerciseId: string) => {
+  const db = await getDb();
+  await db.runAsync("DELETE FROM sets WHERE exercise_id = ?", [exerciseId]);
+  await db.runAsync("DELETE FROM exercises WHERE id = ?", [exerciseId]);
 };
 
-export const saveExerciseLogs = (values: ExerciseLog[]) => {
-  values.forEach((value) => {
-    db.runSync(
+export const saveExerciseLogs = async (values: ExerciseLog[]) => {
+  const db = await getDb();
+  await Promise.all(values.map(async (value) => {
+    await db.runAsync(
       `INSERT INTO exercise_log (id, exercise_id, training_log_id, name, unit, image_uri)
       VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
@@ -189,12 +204,13 @@ export const saveExerciseLogs = (values: ExerciseLog[]) => {
         value.imageUri ?? null,
       ]
     );
-  });
+  }));
 };
 
-export const saveSetLogs = (values: SetLog[]) => {
-  values.forEach((value) => {
-    db.runSync(
+export const saveSetLogs = async (values: SetLog[]) => {
+  const db = await getDb();
+  await Promise.all(values.map(async (value) => {
+    await db.runAsync(
       `INSERT INTO set_log (id, exercise_log_id, reps, weight)
       VALUES (?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
@@ -209,36 +225,33 @@ export const saveSetLogs = (values: SetLog[]) => {
         value.weight ?? null,
       ]
     );
-  });
+  }));
 };
 
-export const saveExerciseLogsWithSets = (
+export const saveExerciseLogsWithSets = async (
   exerciseLogs: ExerciseLog[]
 ) => {
-  saveExerciseLogs(exerciseLogs);
-  exerciseLogs.map((exerciseLog) => {
-    {
-      saveSetLogs(exerciseLog.sets);
-    }
-  })
+  await saveExerciseLogs(exerciseLogs);
+  await Promise.all(exerciseLogs.map((exerciseLog) => saveSetLogs(exerciseLog.sets)));
 };
 
-export const saveTraningDayLog = (value: TrainingDayLog) => {
+export const saveTraningDayLog = async (value: TrainingDayLog) => {
+  const db = await getDb();
   const trainingDayLogId = value.id;
-  const exists = db.getFirstSync("SELECT id FROM training_day_log WHERE id = ?", [
+  const exists = (await db.getFirstAsync("SELECT id FROM training_day_log WHERE id = ?", [
     trainingDayLogId,
-  ]) as { id: string } | undefined;
+  ])) as { id: string } | undefined;
 
-  db.execSync("BEGIN");
+  await db.execAsync("BEGIN");
   try {
     if(exists) {
-          db.runSync(
+          await db.runAsync(
         "UPDATE training_day_log SET date = ? update_time = ? WHERE id = ?",
         [value.date.getDate(), Date.now()]
       );
-      saveExerciseLogsWithSets(value.exerciseLogs);
+      await saveExerciseLogsWithSets(value.exerciseLogs);
     } else {
-      db.runSync(
+      await db.runAsync(
         "INSERT INTO training_day_log (id, date, create_time, update_time) VALUES (?, ?, ?, ?)",
         [
           value.id,
@@ -246,11 +259,11 @@ export const saveTraningDayLog = (value: TrainingDayLog) => {
           Date.now(),
           Date.now()
         ]);
-      saveExerciseLogsWithSets(value.exerciseLogs);
+      await saveExerciseLogsWithSets(value.exerciseLogs);
     }
-    db.execSync("COMMIT");
+    await db.execAsync("COMMIT");
   } catch (error) {
-    db.execSync("ROLLBACK");
+    await db.execAsync("ROLLBACK");
     throw error;
   }
 }

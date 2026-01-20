@@ -25,21 +25,21 @@ export default function ExerciseProgramDetail({
       ? idParam
       : undefined;
   const [exercises, setExercises] = useState<ProgramExercise[]>([]);
-  const loadExercises = useCallback(() => {
+  const loadExercises = useCallback(async () => {
     if (!programId) {
       setExercises([]);
       return;
     }
-    setExercises(getProgramExercisesByProgramId(programId));
+    setExercises(await getProgramExercisesByProgramId(programId));
   }, [programId]);
 
   useEffect(() => {
-    initDb();
+    void initDb();
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      loadExercises();
+      void loadExercises();
     }, [loadExercises])
   );
 
@@ -60,13 +60,15 @@ export default function ExerciseProgramDetail({
 
   const handleAdd = () => {
     if (!programId) {
-      Alert.alert("Missing program", "Please pick a program first.");
-      return;
+      router.push({
+        pathname: "/ExerciseCardDetail",
+      });
+    } else {
+      router.push({
+        pathname: "/ExerciseCardDetail",
+        params: { programId },
+      });
     }
-    router.push({
-      pathname: "/ExerciseCardDetail",
-      params: { programId },
-    });
   };
 
   const handleDeleteExercise = (exerciseId?: string) => {
@@ -82,8 +84,10 @@ export default function ExerciseProgramDetail({
           text: "Delete",
           style: "destructive",
           onPress: () => {
-            deleteExercise(exerciseId);
-            loadExercises();
+            void (async () => {
+              await deleteExercise(exerciseId);
+              await loadExercises();
+            })();
           },
         },
       ],

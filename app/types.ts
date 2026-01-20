@@ -7,7 +7,7 @@ export type ProgramExerciseSet = {
 
 export type ProgramExercise = {
   id: string;
-  programId?: string;
+  programId: string;
   name: string;
   unit: string | null;
   imageUri?: string | null;
@@ -17,7 +17,7 @@ export type ProgramExercise = {
 export type ExerciseProgramValue = {
   id: string;
   name: string;
-  exercises: ProgramExercise[];
+  exercises?: ProgramExercise[] | [];
 };
 
 export type SetLog = {
