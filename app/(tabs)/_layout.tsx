@@ -1,8 +1,14 @@
 import { Stack } from "expo-router";
+import { useDrizzleStudio } from "expo-drizzle-studio-plugin";
+import * as SQLite from "expo-sqlite";
 import { StyleSheet } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
+const db = SQLite.openDatabaseSync("gymlogger.db");
+
 export default function RootLayout() {
+  useDrizzleStudio(db);
+
   return (
     <SafeAreaProvider>
       <SafeAreaView
