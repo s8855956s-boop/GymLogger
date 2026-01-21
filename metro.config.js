@@ -1,11 +1,17 @@
-const { getDefaultConfig } = require('expo/metro-config');
+const { getDefaultConfig } = require("expo/metro-config");
 
 const config = getDefaultConfig(__dirname);
 
-// Ensure wasm is treated as an asset so the web worker can load wa-sqlite.
-if (!config.resolver.assetExts.includes('wasm')) {
-  config.resolver.assetExts.push('wasm');
-}
-config.resolver.sourceExts = config.resolver.sourceExts.filter((ext) => ext !== 'wasm');
+// Add wasm asset support
+config.resolver.assetExts.push("wasm");
+
+// Add COEP and COOP headers to support SharedArrayBuffer
+config.server.enhanceMiddleware = (middleware) => {
+  return (req, res, next) => {
+    res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+    res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+    middleware(req, res, next);
+  };
+};
 
 module.exports = config;
