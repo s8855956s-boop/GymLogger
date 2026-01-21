@@ -17,7 +17,7 @@ import type { ProgramExercise, ProgramExerciseSet } from "../types";
 
 const placeholderImage = require("../../assets/images/react-logo.png");
 
-const UNIT_OPTIONS = ["公斤", "磅"];
+const UNIT_OPTIONS = ["kg", "lbs"];
 
 type ExerciseCardDetailProps = {
   value?: ProgramExercise;
@@ -27,7 +27,13 @@ export default function ExerciseCardDetail({
   value: valueProp,
 }: ExerciseCardDetailProps) {
   const router = useRouter();
-  const { value: valueParam, name, programId, exerciseId, isLog: isLogParam } = useLocalSearchParams<{
+  const {
+    value: valueParam,
+    name,
+    programId,
+    exerciseId,
+    isLog: isLogParam,
+  } = useLocalSearchParams<{
     value?: string;
     name?: string;
     programId?: string;
@@ -35,7 +41,8 @@ export default function ExerciseCardDetail({
     isLog?: string;
   }>();
   const isLog = isLogParam === undefined ? true : isLogParam === "true";
-  const resolvedProgramId = typeof programId === "string" ? programId : undefined;
+  const resolvedProgramId =
+    typeof programId === "string" ? programId : undefined;
   const resolvedExerciseId =
     typeof exerciseId === "string" ? exerciseId : undefined;
   const initialValue = useMemo(() => {
@@ -58,7 +65,7 @@ export default function ExerciseCardDetail({
           id: "",
           programId: "",
           name: "",
-          unit: null,
+          unit: "kg",
           imageUri: null,
           setRows: [],
         });
@@ -66,12 +73,12 @@ export default function ExerciseCardDetail({
     }
 
     return applyExerciseId({
-          id: "",
-          programId: "",
-          name: "",
-          unit: null,
-          imageUri: null,
-          setRows: [],
+      id: "",
+      programId: "",
+      name: "",
+      unit: "kg",
+      imageUri: null,
+      setRows: [],
     });
   }, [valueParam, valueProp, resolvedExerciseId]);
 
@@ -83,8 +90,12 @@ export default function ExerciseCardDetail({
   }, []);
 
   useEffect(() => {
-    setExerciseName(typeof value.name === "string" && value.name.trim().length === 0 ? "運動項目" : value.name);
-  }, [value])
+    setExerciseName(
+      typeof value.name === "string" && value.name.trim().length === 0
+        ? "運動項目"
+        : value.name,
+    );
+  }, [value]);
 
   const handleExerciseChange = (nextValue: ProgramExercise) => {
     setValue(nextValue);
@@ -102,7 +113,7 @@ export default function ExerciseCardDetail({
 
   const updateField = <Key extends keyof ProgramExercise>(
     key: Key,
-    fieldValue: ProgramExercise[Key]
+    fieldValue: ProgramExercise[Key],
   ) => {
     handleExerciseChange({
       ...value,
@@ -121,70 +132,85 @@ export default function ExerciseCardDetail({
   };
 
   const handleDeleteSet = (id: string) => {
-    const nextSetRows = value.setRows.filter(row => {
-      if(row.id === id){
+    const nextSetRows = value.setRows.filter((row) => {
+      if (row.id === id) {
         return false;
       }
       return true;
     });
 
     updateField("setRows", nextSetRows);
-  };;
+  };
 
   const updateSetRow = (id: string, field: "reps" | "weight", next: string) => {
     const nextRows = value.setRows.map((row) =>
-      row.id === id ? { ...row, [field]: next } : row
+      row.id === id ? { ...row, [field]: next } : row,
     );
 
     updateField("setRows", nextRows);
   };
 
   const handleToggleUnit = () => {
-  const currentIndex = UNIT_OPTIONS.indexOf(selectedUnitLabel);
-  const nextIndex =
-    currentIndex === -1
-      ? 0
-      : (currentIndex + 1) % UNIT_OPTIONS.length;
+    const currentIndex = UNIT_OPTIONS.indexOf(selectedUnitLabel);
+    const nextIndex =
+      currentIndex === -1 ? 0 : (currentIndex + 1) % UNIT_OPTIONS.length;
 
-  updateField("unit", UNIT_OPTIONS[nextIndex]);
-};
+    updateField("unit", UNIT_OPTIONS[nextIndex]);
+  };
 
-const onPickImage = () => console.log("pick image");
+  const onPickImage = () => console.log("pick image");
 
-const handleSave = async () => {
-  if(isLog){
-  const trainingLogId = createId("trainingDayLog");
-  await saveTraningDayLog({id: trainingLogId, date: new Date(), exerciseLogs: [{id: createId("exerciseLog"), trainingLogId: trainingLogId, name: value.name, unit: value.unit, imageUri: value.imageUri, sets: value.setRows}]});
-  } else {
-    if (!resolvedProgramId) {
-      Alert.alert("Missing program", "Please open this screen from a program.");
-      return;
+  const handleSave = async () => {
+    if (isLog) {
+      const trainingLogId = createId("trainingDayLog");
+      await saveTraningDayLog({
+        id: trainingLogId,
+        date: new Date(),
+        exerciseLogs: [
+          {
+            id: createId("exerciseLog"),
+            trainingLogId: trainingLogId,
+            name: value.name,
+            unit: value.unit,
+            imageUri: value.imageUri,
+            sets: value.setRows,
+          },
+        ],
+      });
+    } else {
+      if (!resolvedProgramId) {
+        Alert.alert(
+          "Missing program",
+          "Please open this screen from a program.",
+        );
+        return;
+      }
+      const savedId = await saveExercise(value);
+      setValue((prev) => ({ ...prev, id: savedId }));
+      router.back();
     }
-    const savedId = await saveExercise(value);
-    setValue((prev) => ({ ...prev, id: savedId }));
     router.back();
-  }
-  router.back();
-};
+  };
 
   const saveButtonHeight = 56;
 
   return (
     <View style={styles.mainContainer}>
-      <ScrollView style={styles.scrollView}
-      contentContainerStyle={[
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[
           styles.contentContainer,
           { paddingBottom: saveButtonHeight + 16 },
         ]}
-        >
-        <Stack.Screen options={{ title: exerciseName}}/>
+      >
+        <Stack.Screen options={{ title: exerciseName }} />
         <View style={styles.header}>
           <Text style={styles.title}>訓練內容</Text>
           <View style={styles.unitRow}>
             <Text style={styles.unitLabel}>重量單位</Text>
             <Pressable
-            onPress={() => handleToggleUnit()}
-            style={styles.unitBadge}
+              onPress={() => handleToggleUnit()}
+              style={styles.unitBadge}
             >
               <Text style={styles.unitBadgeText}>{selectedUnitLabel}</Text>
             </Pressable>
@@ -202,7 +228,10 @@ const handleSave = async () => {
             <Image source={{ uri: value.imageUri }} style={styles.image} />
           ) : (
             <View style={styles.placeholder}>
-              <Image source={placeholderImage} style={styles.placeholderImage} />
+              <Image
+                source={placeholderImage}
+                style={styles.placeholderImage}
+              />
               <Text style={styles.placeholderText}>尚未新增照片</Text>
             </View>
           )}
@@ -243,9 +272,12 @@ const handleSave = async () => {
                 style={styles.input}
               />
             </View>
-          <TouchableOpacity onPress={() => handleDeleteSet(row.id)} style={styles.deleteButton}>
-            <Text style={styles.deleteButtonText}>-</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => handleDeleteSet(row.id)}
+              style={styles.deleteButton}
+            >
+              <Text style={styles.deleteButtonText}>-</Text>
+            </TouchableOpacity>
           </View>
         ))}
 
@@ -278,11 +310,9 @@ const handleSave = async () => {
         </Modal>
       </ScrollView>
       <Pressable
-      onPress={() => void handleSave()}
-      style={[
-        styles.saveButton,
-        { height: saveButtonHeight },
-      ]}>
+        onPress={() => void handleSave()}
+        style={[styles.saveButton, { height: saveButtonHeight }]}
+      >
         <Text style={styles.saveText}>儲存</Text>
       </Pressable>
     </View>
@@ -297,27 +327,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   unitRow: {
-    width: '40%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    width: "40%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   saveButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ffffff',
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#ffffff",
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
-    width: '100%',
-    position: 'absolute',
+    width: "100%",
+    position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
   },
   saveText: {
-    color: '#3d3935',
+    color: "#3d3935",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   unitLabel: {
     marginRight: 8,
@@ -339,9 +369,9 @@ const styles = StyleSheet.create({
     color: "#1F2937",
   },
   unitBadge: {
-    justifyContent: 'center', // 垂直置中
-    alignItems: 'center',     // 水平置中
-    width: '50%',
+    justifyContent: "center", // 垂直置中
+    alignItems: "center", // 水平置中
+    width: "50%",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 999,
