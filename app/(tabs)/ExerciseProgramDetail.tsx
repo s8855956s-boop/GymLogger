@@ -1,7 +1,14 @@
 import { useFocusEffect } from "@react-navigation/native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import ExerciseCard from "../components/ExerciseCard";
 import { deleteExercise, getProgramExercisesByProgramId, initDb } from "../db";
 import type { ProgramExercise } from "../types";
@@ -14,16 +21,22 @@ export default function ExerciseProgramDetail({
   id: idProp,
 }: ExerciseProgramDetailProps) {
   const router = useRouter();
-  const { id: idParam, name: programName } = useLocalSearchParams<{
+  const {
+    id: idParam,
+    name: programName,
+    isLog: isLogString,
+  } = useLocalSearchParams<{
     id?: string;
     name?: string;
+    isLog?: string;
   }>();
+  const isLog = isLogString === "true";
   const programId =
     typeof idProp === "string" && idProp.length > 0
       ? idProp
       : typeof idParam === "string"
-      ? idParam
-      : undefined;
+        ? idParam
+        : undefined;
   const [exercises, setExercises] = useState<ProgramExercise[]>([]);
   const loadExercises = useCallback(async () => {
     if (!programId) {
@@ -39,8 +52,11 @@ export default function ExerciseProgramDetail({
 
   useFocusEffect(
     useCallback(() => {
-      void loadExercises();
-    }, [loadExercises])
+      if (isLog) {
+      } else {
+        void loadExercises();
+      }
+    }, [isLog, loadExercises]),
   );
 
   const handlePress = (exercise: ProgramExercise) => {
@@ -91,7 +107,7 @@ export default function ExerciseProgramDetail({
           },
         },
       ],
-      { cancelable: true }
+      { cancelable: true },
     );
   };
 

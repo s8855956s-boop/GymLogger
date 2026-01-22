@@ -21,24 +21,24 @@ export type ExerciseProgramValue = {
 };
 
 export type SetLog = {
-  id: string;
+  id?: string;
   exerciseLogId?: string;
   reps?: number;
   weight?: number;
-}
+};
 
 export type ExerciseLog = {
-  id: string;
+  id?: string;
   exerciseId?: string;
   trainingLogId?: string;
   name: string;
   unit: string | null;
   imageUri?: string | null;
   sets: SetLog[];
-}
+};
 
 export type TrainingDayLog = {
-  id: string;
+  id?: string;
   date: Date;
   exerciseLogs: ExerciseLog[];
-}
+};

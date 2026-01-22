@@ -91,6 +91,75 @@ export const createProgram = async (
   return { id, name };
 };
 
+export const getTrainingDayLogByDate = async (
+  date: string,
+): Promise<TrainingDayLog> => {
+  const db = await getDb();
+
+  type ExerciseSets = {
+    exerciseLogId: string;
+    trainingLogId: string;
+    name: string;
+    unit: string;
+    imageUri: string;
+    reps: string;
+    weight: string;
+  };
+  const queryResults = (await db.getAllAsync(
+    `
+  SELECT
+    el.id AS exerciseLogId, el.training_log_id AS trainingLogId, el.name, el.unit, el.image_uri AS imageUri, sl.reps, sl.weight
+  FROM
+    training_day_log tdl
+  LEFT JOIN exercise_log el ON tdl.id = el.training_log_id
+  LEFT JOIN set_log sl ON el.id = sl.exercise_log_id
+  WHERE tdl.date = ?
+  `,
+    [date],
+  )) as ExerciseSets[];
+
+  const distinctTrainingLogId = queryResults[0].trainingLogId;
+
+  let filteredResults = queryResults.filter(
+    (result) => result.trainingLogId === distinctTrainingLogId,
+  );
+  const groupedByExerciseId = new Map<string, ExerciseSets[]>();
+
+  for (const exerciseSet of filteredResults) {
+    if (!groupedByExerciseId.has(exerciseSet.exerciseLogId))
+      groupedByExerciseId.set(exerciseSet.exerciseLogId, []);
+    groupedByExerciseId.get(exerciseSet.exerciseLogId)!.push(exerciseSet);
+  }
+
+  let exerciseLogs: ExerciseLog[] = [];
+  for (const key of groupedByExerciseId.keys()) {
+    const exerciseSets = groupedByExerciseId.get(key);
+    if (exerciseSets === undefined) continue;
+    const setRows = exerciseSets?.map((set) => {
+      return {
+        exerciseLogId: set.exerciseLogId,
+        reps: set.reps == null ? undefined : Number(set.reps),
+        weight: set.weight == null ? undefined : Number(set.weight),
+      };
+    });
+
+    exerciseLogs.push({
+      id: exerciseSets[0].exerciseLogId,
+      trainingLogId: exerciseSets[0].trainingLogId,
+      name: exerciseSets[0].name,
+      unit: exerciseSets[0].unit,
+      imageUri: exerciseSets[0].imageUri,
+      sets: setRows,
+    });
+  }
+
+  return {
+    id: distinctTrainingLogId,
+    date: new Date(date),
+    exerciseLogs: exerciseLogs,
+  };
+};
+
 export const getProgramExercisesByProgramId = async (
   programId: string,
 ): Promise<ProgramExercise[]> => {
@@ -205,7 +274,7 @@ export const saveExerciseLogs = async (values: ExerciseLog[]) => {
         image_uri = excluded.image_uri,
         update_time = (strftime('%s','now') * 1000)`,
         [
-          value.id,
+          value.id ?? null,
           value.exerciseId ?? null,
           value.trainingLogId ?? null,
           value.name,
@@ -217,7 +286,10 @@ export const saveExerciseLogs = async (values: ExerciseLog[]) => {
   );
 };
 
-export const saveSetLogs = async (values: SetLog[]) => {
+export const saveSetLogs = async (
+  values: SetLog[],
+  exercise_log_id?: string,
+) => {
   const db = await getDb();
   await Promise.all(
     values.map(async (value) => {
@@ -231,8 +303,8 @@ export const saveSetLogs = async (values: SetLog[]) => {
         weight = excluded.weight,
         update_time = (strftime('%s','now') * 1000)`,
         [
-          value.id,
-          value.exerciseLogId ?? null,
+          value.id ?? null,
+          exercise_log_id ?? null,
           value.reps ?? null,
           value.weight ?? null,
         ],
@@ -244,13 +316,15 @@ export const saveSetLogs = async (values: SetLog[]) => {
 export const saveExerciseLogsWithSets = async (exerciseLogs: ExerciseLog[]) => {
   await saveExerciseLogs(exerciseLogs);
   await Promise.all(
-    exerciseLogs.map((exerciseLog) => saveSetLogs(exerciseLog.sets)),
+    exerciseLogs.map((exerciseLog) =>
+      saveSetLogs(exerciseLog.sets, exerciseLog.id),
+    ),
   );
 };
 
 export const saveTraningDayLog = async (value: TrainingDayLog) => {
   const db = await getDb();
-  const trainingDayLogId = value.id;
+  const trainingDayLogId = value.id ?? null;
   const exists = (await db.getFirstAsync(
     "SELECT id FROM training_day_log WHERE id = ?",
     [trainingDayLogId],
@@ -261,13 +335,13 @@ export const saveTraningDayLog = async (value: TrainingDayLog) => {
     if (exists) {
       await db.runAsync(
         "UPDATE training_day_log SET date = ?, update_time = (strftime('%s','now') * 1000) WHERE id = ?",
-        [value.date.getDate()],
+        [value.date.getTime()],
       );
       await saveExerciseLogsWithSets(value.exerciseLogs);
     } else {
       await db.runAsync(
         "INSERT INTO training_day_log (id, date, create_time, update_time) VALUES (?, ?, (strftime('%s','now') * 1000), (strftime('%s','now') * 1000))",
-        [value.id, value.date.getDate()],
+        [value.id ?? null, value.date.getTime()],
       );
       await saveExerciseLogsWithSets(value.exerciseLogs);
     }
