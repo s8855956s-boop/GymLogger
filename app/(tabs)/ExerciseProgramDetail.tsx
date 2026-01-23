@@ -10,8 +10,13 @@ import {
   View,
 } from "react-native";
 import ExerciseCard from "../components/ExerciseCard";
-import { deleteExercise, getProgramExercisesByProgramId, initDb } from "../db";
-import type { ProgramExercise } from "../types";
+import {
+  deleteExercise,
+  getProgramExercisesByProgramId,
+  getTrainingDayLogByDate,
+  initDb,
+} from "../db";
+import type { ExerciseLog, ExerciseValue, ProgramExercise } from "../types";
 
 type ExerciseProgramDetailProps = {
   id?: string;
@@ -25,10 +30,12 @@ export default function ExerciseProgramDetail({
     id: idParam,
     name: programName,
     isLog: isLogString,
+    selectedDate: selectedDateParam,
   } = useLocalSearchParams<{
     id?: string;
     name?: string;
     isLog?: string;
+    selectedDate?: string;
   }>();
   const isLog = isLogString === "true";
   const programId =
@@ -37,14 +44,70 @@ export default function ExerciseProgramDetail({
       : typeof idParam === "string"
         ? idParam
         : undefined;
-  const [exercises, setExercises] = useState<ProgramExercise[]>([]);
+
+  const selectedDate = selectedDateParam;
+  const [exercises, setExercises] = useState<ExerciseValue[]>([]);
+  const convertProgramExerciseToExerciseValue = (
+    programExercises: ProgramExercise[],
+  ): ExerciseValue[] => {
+    return programExercises.map((exercise) => {
+      const sets = exercise.setRows.map((set) => ({
+        id: set.id,
+        reps: set.reps,
+        weight: set.weight,
+      }));
+      return {
+        name: exercise.name,
+        unit: exercise.unit,
+        imageUri: exercise.imageUri,
+        sets: sets,
+      };
+    });
+  };
+
+  const convertExerciseLogToExerciseValue = (
+    exerciseLog: ExerciseLog[],
+  ): ExerciseValue[] => {
+    return exerciseLog.map((exercise) => {
+      const sets = exercise.sets.map((set) => ({
+        id: set.id,
+        reps: set.reps,
+        weight: set.weight,
+      }));
+      return {
+        name: exercise.name,
+        unit: exercise.unit,
+        imageUri: exercise.imageUri,
+        sets: sets,
+      };
+    });
+  };
+
   const loadExercises = useCallback(async () => {
+    if (isLog) {
+      const trainingDayLog = await getTrainingDayLogByDate(
+        Date.parse(selectedDate ?? ""),
+      );
+      if (trainingDayLog.exerciseLogs != null) {
+        setExercises(
+          convertExerciseLogToExerciseValue(trainingDayLog.exerciseLogs),
+        );
+        return;
+      } else {
+        setExercises([]);
+        return;
+      }
+    }
     if (!programId) {
       setExercises([]);
       return;
     }
-    setExercises(await getProgramExercisesByProgramId(programId));
-  }, [programId]);
+    setExercises(
+      convertProgramExerciseToExerciseValue(
+        await getProgramExercisesByProgramId(programId),
+      ),
+    );
+  }, [isLog, selectedDate, programId]);
 
   useEffect(() => {
     void initDb();
@@ -52,11 +115,8 @@ export default function ExerciseProgramDetail({
 
   useFocusEffect(
     useCallback(() => {
-      if (isLog) {
-      } else {
-        void loadExercises();
-      }
-    }, [isLog, loadExercises]),
+      void loadExercises();
+    }, [loadExercises]),
   );
 
   const handlePress = (exercise: ProgramExercise) => {
@@ -75,7 +135,12 @@ export default function ExerciseProgramDetail({
   };
 
   const handleAdd = () => {
-    if (!programId) {
+    if (isLog) {
+      router.push({
+        pathname: "/ExerciseCardDetail",
+        params: {},
+      });
+    } else if (!programId) {
       router.push({
         pathname: "/ExerciseCardDetail",
       });
@@ -116,17 +181,21 @@ export default function ExerciseProgramDetail({
       <TouchableOpacity style={styles.addButton} onPress={() => handleAdd()}>
         <Text style={styles.addButtonText}>+</Text>
       </TouchableOpacity>
-      <Stack.Screen options={{ title: programName ?? "Program" }} />
+      {isLog ? (
+        <Stack.Screen options={{ title: selectedDate ?? "" }} />
+      ) : (
+        <Stack.Screen options={{ title: programName ?? "Program" }} />
+      )}
       {exercises.map((row, index) => (
         <Pressable
-          key={row.id ?? `${row.name}-${index}`}
-          onPress={() => handlePress(row)}
+          key={`${row.name}-${index}`}
+          // onPress={() => handlePress(row)}
         >
           <ExerciseCard
             value={row}
             isProgram={true}
             parentStyle={styles.exerciseCard}
-            handleDelete={() => handleDeleteExercise(row.id)}
+            // handleDelete={() => handleDeleteExercise(row.id)}
           />
         </Pressable>
       ))}

@@ -1,42 +1,58 @@
-import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from "react-native";
-import type { ProgramExercise } from "../types";
+import {
+  StyleProp,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+} from "react-native";
+import type { ExerciseValue } from "../types";
 
 type ExerciseCardProps = {
-  value: ProgramExercise;
+  value: ExerciseValue;
   isProgram?: boolean;
   parentStyle?: StyleProp<ViewStyle>;
   handleDelete?: () => void;
 };
 
-export default function ExerciseCard({ value, isProgram = false, parentStyle, handleDelete }: ExerciseCardProps) {
+export default function ExerciseCard({
+  value,
+  isProgram = false,
+  parentStyle,
+  handleDelete,
+}: ExerciseCardProps) {
   const setsAreIdentical = () => {
-    const repsOfSets: (number)[] = [];
+    const repsOfSets: number[] = [];
     const weightsOfSets: number[] = [];
-    value.setRows.map((row) => {
-      if(row.reps !== undefined){
+    value.sets.map((row) => {
+      if (row.reps !== undefined) {
         repsOfSets.push(row.reps);
       }
-      if(row.weight !== undefined){
-      weightsOfSets.push(row.weight);
+      if (row.weight !== undefined) {
+        weightsOfSets.push(row.weight);
       }
     });
 
-    const repsOfFirst = repsOfSets.find(v => v != null);
-    const weightOfFirst = weightsOfSets.find(v => v != null);
+    const repsOfFirst = repsOfSets.find((v) => v != null);
+    const weightOfFirst = weightsOfSets.find((v) => v != null);
 
-    return !((repsOfFirst != null && repsOfSets.some(v => v != null && v !== repsOfFirst))
-    || weightOfFirst != null && weightsOfSets.some(v => v != null && v !== weightOfFirst));
-  }
+    return !(
+      (repsOfFirst != null &&
+        repsOfSets.some((v) => v != null && v !== repsOfFirst)) ||
+      (weightOfFirst != null &&
+        weightsOfSets.some((v) => v != null && v !== weightOfFirst))
+    );
+  };
 
   const renderProgramSummary = () => {
     if (setsAreIdentical()) {
       return (
         <View style={styles.row}>
-          <Text style={styles.rowText}>共{value.setRows.length}組</Text>
-          <Text style={styles.rowText}>每組{value.setRows[0].reps || "-"} 次</Text>
+          <Text style={styles.rowText}>共{value.sets.length}組</Text>
+          <Text style={styles.rowText}>每組{value.sets[0].reps || "-"} 次</Text>
           <Text style={styles.dot}>·</Text>
           <Text style={styles.rowText}>
-            {value.setRows[0].weight || "-"}
+            {value.sets[0].weight || "-"}
             {value.unit ? ` ${value.unit}` : ""}
           </Text>
         </View>
@@ -44,27 +60,31 @@ export default function ExerciseCard({ value, isProgram = false, parentStyle, ha
     } else {
       return (
         <View style={styles.summary}>
-          <Text>共{value.setRows.length}組</Text>
+          <Text>共{value.sets.length}組</Text>
         </View>
       );
     }
-  }
+  };
 
   return (
     <View style={[styles.card, parentStyle]}>
       <View style={styles.exerciseHeader}>
         <Text style={styles.title}>{value.name || "未命名動作"}</Text>
-        <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete?.()}>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDelete?.()}
+        >
           <Text style={styles.addButtonText}>刪除</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.rows}>
         {isProgram ? renderProgramSummary() : <></>}
-        {(isProgram && setsAreIdentical()) ? <></> :
-        value.setRows.length ? (
-          value.setRows.map((row, index) => (
-            <View key={row.id || index} style={styles.row}>
+        {isProgram && setsAreIdentical() ? (
+          <></>
+        ) : value.sets.length ? (
+          value.sets.map((row, index) => (
+            <View key={index} style={styles.row}>
               <View style={styles.setIndex}>
                 <Text style={styles.index}>{index + 1}</Text>
               </View>
@@ -143,23 +163,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#6B7280",
   },
-    deleteButton: {
-      width: 64,
-      height: 24,
-      borderRadius: 18,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: "#e71010",
-    },
-    addButtonText: {
-      color: "#FFFFFF",
-      fontSize: 16,
-      fontWeight: "700",
-      lineHeight: 22,
-    },
+  deleteButton: {
+    width: 64,
+    height: 24,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#e71010",
+  },
+  addButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+    lineHeight: 22,
+  },
   exerciseHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
   },
 });

@@ -19,7 +19,7 @@ export default function Index() {
   }, [currentMonth]);
   const monthOptions = useMemo(
     () => Array.from({ length: 12 }, (_, index) => index + 1),
-    []
+    [],
   );
 
   const toMonthString = (date: Date) => {
@@ -35,10 +35,10 @@ export default function Index() {
   };
 
   const handlePress = () => {
-          router.push({
-              pathname: "/(tabs)/ExerciseProgramPage",
-          })
-  }
+    router.push({
+      pathname: "/(tabs)/ExerciseProgramPage",
+    });
+  };
 
   const handlePrevMonth = () => {
     const next = new Date(currentMonth);
@@ -66,13 +66,14 @@ export default function Index() {
   const handleDatePress = (dateString: string) => {
     setSelectedDate(dateString);
     router.push({
-      pathname: "/(tabs)/ExerciseProgramDetail"
-    })
+      pathname: "/(tabs)/ExerciseProgramDetail",
+      params: { selectedDate: dateString, isLog: "true" },
+    });
   };
 
   return (
     <View style={styles.mainContainer}>
-    <Stack.Screen options={{ title: "首頁"}}/>
+      <Stack.Screen options={{ title: "首頁" }} />
       <Pressable onPress={() => handlePress()}>
         <View style={styles.card}>
           <Text style={styles.title}>訓練課表</Text>
@@ -85,7 +86,9 @@ export default function Index() {
             <Text style={styles.navButtonText}>{"<"}</Text>
           </Pressable>
           <Pressable onPress={openPicker} style={styles.monthButton}>
-            <Text style={styles.monthButtonText}>{toMonthString(currentMonth)}</Text>
+            <Text style={styles.monthButtonText}>
+              {toMonthString(currentMonth)}
+            </Text>
           </Pressable>
           <Pressable onPress={handleNextMonth} style={styles.navButton}>
             <Text style={styles.navButtonText}>{">"}</Text>
@@ -172,7 +175,10 @@ export default function Index() {
               >
                 <Text style={styles.pickerActionText}>Cancel</Text>
               </Pressable>
-              <Pressable onPress={applyPicker} style={styles.pickerActionButton}>
+              <Pressable
+                onPress={applyPicker}
+                style={styles.pickerActionButton}
+              >
                 <Text style={styles.pickerActionText}>Apply</Text>
               </Pressable>
             </View>
@@ -313,5 +319,3 @@ const styles = StyleSheet.create({
     gap: 12,
   },
 });
-
-

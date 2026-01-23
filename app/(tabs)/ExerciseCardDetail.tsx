@@ -12,15 +12,20 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { createId, initDb, saveExercise, saveTraningDayLog } from "../db";
-import type { ProgramExercise, ProgramExerciseSet } from "../types";
+import {
+  createId,
+  initDb,
+  saveProgramExercise,
+  saveTraningDayLog,
+} from "../db";
+import type { ExerciseValue, ProgramExerciseSet } from "../types";
 
 const placeholderImage = require("../../assets/images/react-logo.png");
 
 const UNIT_OPTIONS = ["kg", "lbs"];
 
 type ExerciseCardDetailProps = {
-  value?: ProgramExercise;
+  value?: ExerciseValue;
 };
 
 export default function ExerciseCardDetail({
@@ -31,58 +36,47 @@ export default function ExerciseCardDetail({
     value: valueParam,
     name,
     programId,
-    exerciseId,
+    programExerciseId: programExeerciseIdParam,
     isLog: isLogParam,
   } = useLocalSearchParams<{
     value?: string;
     name?: string;
     programId?: string;
-    exerciseId?: string;
+    programExerciseId?: string;
     isLog?: string;
   }>();
   const isLog = isLogParam === undefined ? true : isLogParam === "true";
+  const programExerciseId =
+    programExeerciseIdParam === undefined ? "" : programExeerciseIdParam;
   const resolvedProgramId =
     typeof programId === "string" ? programId : undefined;
-  const resolvedExerciseId =
-    typeof exerciseId === "string" ? exerciseId : undefined;
   const initialValue = useMemo(() => {
-    const applyExerciseId = (base: ProgramExercise) => {
-      if (resolvedExerciseId && !base.id) {
-        return { ...base, id: resolvedExerciseId };
-      }
-      return base;
-    };
-
     if (valueProp) {
-      return applyExerciseId(valueProp);
+      return valueProp;
     }
 
     if (typeof valueParam === "string") {
       try {
-        return applyExerciseId(JSON.parse(valueParam) as ProgramExercise);
+        return JSON.parse(valueParam) as ExerciseValue;
       } catch {
-        return applyExerciseId({
-          id: "",
-          programId: "",
+        return {
           name: "",
           unit: "kg",
           imageUri: null,
-          setRows: [],
-        });
+          sets: [],
+        };
       }
     }
 
-    return applyExerciseId({
-      id: "",
-      programId: "",
+    return {
       name: "",
       unit: "kg",
       imageUri: null,
-      setRows: [],
-    });
-  }, [valueParam, valueProp, resolvedExerciseId]);
+      sets: [],
+    };
+  }, [valueParam, valueProp]);
 
-  const [value, setValue] = useState<ProgramExercise>(initialValue);
+  const [value, setValue] = useState<ExerciseValue>(initialValue);
   const [exerciseName, setExerciseName] = useState(name ?? "運動項目");
 
   useEffect(() => {
@@ -97,7 +91,7 @@ export default function ExerciseCardDetail({
     );
   }, [value]);
 
-  const handleExerciseChange = (nextValue: ProgramExercise) => {
+  const handleExerciseChange = (nextValue: ExerciseValue) => {
     setValue(nextValue);
   };
 
@@ -111,9 +105,9 @@ export default function ExerciseCardDetail({
     return UNIT_OPTIONS[0] ?? "選擇單位";
   }, [value.unit]);
 
-  const updateField = <Key extends keyof ProgramExercise>(
+  const updateField = <Key extends keyof ExerciseValue>(
     key: Key,
-    fieldValue: ProgramExercise[Key],
+    fieldValue: ExerciseValue[Key],
   ) => {
     handleExerciseChange({
       ...value,
@@ -128,26 +122,26 @@ export default function ExerciseCardDetail({
       weight: undefined,
     };
 
-    updateField("setRows", [...value.setRows, newSet]);
+    updateField("sets", [...value.sets, newSet]);
   };
 
   const handleDeleteSet = (id: string) => {
-    const nextSetRows = value.setRows.filter((row) => {
+    const nextSetRows = value.sets.filter((row) => {
       if (row.id === id) {
         return false;
       }
       return true;
     });
 
-    updateField("setRows", nextSetRows);
+    updateField("sets", nextSetRows);
   };
 
   const updateSetRow = (id: string, field: "reps" | "weight", next: string) => {
-    const nextRows = value.setRows.map((row) =>
+    const nextRows = value.sets.map((row) =>
       row.id === id ? { ...row, [field]: next } : row,
     );
 
-    updateField("setRows", nextRows);
+    updateField("sets", nextRows);
   };
 
   const handleToggleUnit = () => {
@@ -173,7 +167,7 @@ export default function ExerciseCardDetail({
             name: value.name,
             unit: value.unit,
             imageUri: value.imageUri,
-            sets: value.setRows,
+            sets: value.sets,
           },
         ],
       });
@@ -185,7 +179,11 @@ export default function ExerciseCardDetail({
         );
         return;
       }
-      const savedId = await saveExercise(value);
+      const savedId = await saveProgramExercise(
+        programExerciseId,
+        resolvedProgramId,
+        value,
+      );
       setValue((prev) => ({ ...prev, id: savedId }));
       router.back();
     }
@@ -247,7 +245,7 @@ export default function ExerciseCardDetail({
           </TouchableOpacity>
         </View>
 
-        {value.setRows.map((row, index) => (
+        {value.sets.map((row, index) => (
           <View key={row.id} style={styles.setRow}>
             <View style={styles.setIndex}>
               <Text style={styles.setIndexText}>{index + 1}</Text>
