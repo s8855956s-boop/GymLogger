@@ -138,7 +138,7 @@ export default function ExerciseProgramDetail({
     if (isLog) {
       router.push({
         pathname: "/ExerciseCardDetail",
-        params: {},
+        params: { selectedDate: selectedDate },
       });
     } else if (!programId) {
       router.push({

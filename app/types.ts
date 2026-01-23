@@ -30,7 +30,7 @@ export type SetLog = {
 export type ExerciseLog = {
   id?: string;
   exerciseId?: string;
-  trainingLogId?: string;
+  trainingLogId?: number;
   name: string;
   unit: string | null;
   imageUri?: string | null;
@@ -38,7 +38,7 @@ export type ExerciseLog = {
 };
 
 export type TrainingDayLog = {
-  id?: string;
+  dateId?: number;
   date?: Date;
   exerciseLogs?: ExerciseLog[];
 };

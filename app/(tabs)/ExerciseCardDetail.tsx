@@ -38,14 +38,18 @@ export default function ExerciseCardDetail({
     programId,
     programExerciseId: programExeerciseIdParam,
     isLog: isLogParam,
+    selectedDate: selectedDateString,
   } = useLocalSearchParams<{
     value?: string;
     name?: string;
     programId?: string;
     programExerciseId?: string;
     isLog?: string;
+    selectedDate?: string;
   }>();
   const isLog = isLogParam === undefined ? true : isLogParam === "true";
+  const selectedDate =
+    selectedDateString === undefined ? 0 : Number.parseInt(selectedDateString);
   const programExerciseId =
     programExeerciseIdParam === undefined ? "" : programExeerciseIdParam;
   const resolvedProgramId =
@@ -156,9 +160,9 @@ export default function ExerciseCardDetail({
 
   const handleSave = async () => {
     if (isLog) {
-      const trainingLogId = createId("trainingDayLog");
+      const trainingLogId = selectedDate;
       await saveTraningDayLog({
-        id: trainingLogId,
+        dateId: trainingLogId,
         date: new Date(),
         exerciseLogs: [
           {

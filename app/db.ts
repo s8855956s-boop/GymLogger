@@ -65,7 +65,7 @@ export const initDb = async () => {
       update_time INTEGER NOT NULL
     );
     CREATE TABLE IF NOT EXISTS training_day_log (
-      id TEXT PRIMARY KEY NOT NULL,
+      date_id INTEGER PRIMARY KEY NOT NULL,
       date INTEGER NOT NULL,
       create_time INTEGER NOT NULL,
       update_time INTEGER NOT NULL
@@ -97,15 +97,10 @@ export const getTrainingDayLogByDate = async (
 ): Promise<TrainingDayLog> => {
   const db = await getDb();
 
-  const start = new Date(date);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(date);
-  end.setHours(23, 59, 59, 999);
-
   type ExerciseSets = {
     id: string;
     exerciseLogId: string;
-    trainingLogId: string;
+    trainingLogId: number;
     name: string;
     unit: string;
     imageUri: string;
@@ -118,11 +113,11 @@ export const getTrainingDayLogByDate = async (
     el.id AS exerciseLogId, el.training_log_id AS trainingLogId, el.name, el.unit, el.image_uri AS imageUri, sl.reps, sl.weight
   FROM
     training_day_log tdl
-  LEFT JOIN exercise_log el ON tdl.id = el.training_log_id
+  LEFT JOIN exercise_log el ON tdl.date_id = el.training_log_id
   LEFT JOIN set_log sl ON el.id = sl.exercise_log_id
-  WHERE tdl.date >= ? AND tdl.date <= ?
+  WHERE tdl.date_id = ?
   `,
-    [start.getTime(), end.getTime()],
+    [date],
   )) as ExerciseSets[];
   if (queryResults.length < 1) return {};
 
@@ -163,7 +158,7 @@ export const getTrainingDayLogByDate = async (
   }
 
   return {
-    id: distinctTrainingLogId,
+    dateId: distinctTrainingLogId,
     date: new Date(date),
     exerciseLogs: exerciseLogs,
   };
@@ -339,24 +334,31 @@ export const saveExerciseLogsWithSets = async (exerciseLogs: ExerciseLog[]) => {
 
 export const saveTraningDayLog = async (value: TrainingDayLog) => {
   const db = await getDb();
-  const trainingDayLogId = value.id ?? null;
+  const trainingDayLogId = value.dateId ?? null;
   const exists = (await db.getFirstAsync(
-    "SELECT id FROM training_day_log WHERE id = ?",
+    "SELECT date_id FROM training_day_log WHERE date_id = ?",
     [trainingDayLogId],
-  )) as { id: string } | undefined;
+  )) as { dateId: string } | undefined;
 
   await db.execAsync("BEGIN");
   try {
+    let dateValue;
+    if (value.date) {
+      dateValue = value.date;
+      dateValue.setHours(0, 0, 0, 0);
+    } else {
+      throw console.error("no date");
+    }
     if (exists && value.date) {
       await db.runAsync(
-        "UPDATE training_day_log SET date = ?, update_time = (strftime('%s','now') * 1000) WHERE id = ?",
-        [value.date.getTime()],
+        "UPDATE training_day_log SET date_id = ?, update_time = (strftime('%s','now') * 1000) WHERE id = ?",
+        [dateValue.getTime()],
       );
       await saveExerciseLogsWithSets(value.exerciseLogs ?? []);
-    } else if (value.date) {
+    } else {
       await db.runAsync(
-        "INSERT INTO training_day_log (id, date, create_time, update_time) VALUES (?, ?, (strftime('%s','now') * 1000), (strftime('%s','now') * 1000))",
-        [value.id ?? null, value.date.getTime()],
+        "INSERT INTO training_day_log (date_id, date, create_time, update_time) VALUES (?, ?, (strftime('%s','now') * 1000), (strftime('%s','now') * 1000))",
+        [dateValue.getTime(), dateValue.getTime()],
       );
       await saveExerciseLogsWithSets(value.exerciseLogs ?? []);
     }
