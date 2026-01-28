@@ -1,13 +1,13 @@
+import { useFocusEffect } from "@react-navigation/native";
 import { router, Stack } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { useFocusEffect } from "@react-navigation/native";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ExerciseProgram from "../components/ExerciseProgram";
 import { createProgram, initDb, listPrograms } from "../db";
-import type { ExerciseProgramValue } from "../types";
+import type { TrainingProgram } from "../types";
 
 export default function ExerciseProgramPage() {
-  const [programs, setPrograms] = useState<ExerciseProgramValue[]>([]);
+  const [programs, setPrograms] = useState<TrainingProgram[]>([]);
 
   const loadPrograms = useCallback(async () => {
     setPrograms(await listPrograms());
@@ -20,7 +20,7 @@ export default function ExerciseProgramPage() {
   useFocusEffect(
     useCallback(() => {
       void loadPrograms();
-    }, [loadPrograms])
+    }, [loadPrograms]),
   );
 
   const handleAdd = async () => {
@@ -35,7 +35,10 @@ export default function ExerciseProgramPage() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ title: "Programs" }} />
-      <TouchableOpacity style={styles.addButton} onPress={() => void handleAdd()}>
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => void handleAdd()}
+      >
         <Text style={styles.addButtonText}>+</Text>
       </TouchableOpacity>
       <View style={styles.rows}>

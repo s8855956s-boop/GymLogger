@@ -12,11 +12,11 @@ import {
 import ExerciseCard from "../components/ExerciseCard";
 import {
   deleteExercise,
-  getProgramExercisesByProgramId,
+  getExercisesForProgramByProgramId,
   getTrainingDayLogByDate,
   initDb,
 } from "../db";
-import type { ExerciseLog, ExerciseValue, ProgramExercise } from "../types";
+import type { ExerciseUI } from "../types";
 
 type ExerciseProgramDetailProps = {
   id?: string;
@@ -46,52 +46,20 @@ export default function ExerciseProgramDetail({
         : undefined;
 
   const selectedDate = selectedDateParam;
-  const [exercises, setExercises] = useState<ExerciseValue[]>([]);
-  const convertProgramExerciseToExerciseValue = (
-    programExercises: ProgramExercise[],
-  ): ExerciseValue[] => {
-    return programExercises.map((exercise) => {
-      const sets = exercise.setRows.map((set) => ({
-        id: set.id,
-        reps: set.reps,
-        weight: set.weight,
-      }));
-      return {
-        name: exercise.name,
-        unit: exercise.unit,
-        imageUri: exercise.imageUri,
-        sets: sets,
-      };
-    });
-  };
-
-  const convertExerciseLogToExerciseValue = (
-    exerciseLog: ExerciseLog[],
-  ): ExerciseValue[] => {
-    return exerciseLog.map((exercise) => {
-      const sets = exercise.sets.map((set) => ({
-        id: set.id,
-        reps: set.reps,
-        weight: set.weight,
-      }));
-      return {
-        name: exercise.name,
-        unit: exercise.unit,
-        imageUri: exercise.imageUri,
-        sets: sets,
-      };
-    });
-  };
+  const [exercises, setExercises] = useState<ExerciseUI[]>([]);
 
   const loadExercises = useCallback(async () => {
     if (isLog) {
       const trainingDayLog = await getTrainingDayLogByDate(
         Date.parse(selectedDate ?? ""),
       );
-      if (trainingDayLog.exerciseLogs != null) {
-        setExercises(
-          convertExerciseLogToExerciseValue(trainingDayLog.exerciseLogs),
-        );
+      if (
+        trainingDayLog != null &&
+        trainingDayLog !== undefined &&
+        trainingDayLog.exercisesForLog != null &&
+        trainingDayLog.exercisesForLog !== undefined
+      ) {
+        setExercises(trainingDayLog.exercisesForLog);
         return;
       } else {
         setExercises([]);
@@ -102,11 +70,7 @@ export default function ExerciseProgramDetail({
       setExercises([]);
       return;
     }
-    setExercises(
-      convertProgramExerciseToExerciseValue(
-        await getProgramExercisesByProgramId(programId),
-      ),
-    );
+    setExercises(await getExercisesForProgramByProgramId(programId));
   }, [isLog, selectedDate, programId]);
 
   useEffect(() => {
@@ -119,7 +83,7 @@ export default function ExerciseProgramDetail({
     }, [loadExercises]),
   );
 
-  const handlePress = (exercise: ProgramExercise) => {
+  const handlePress = (exercise: ExerciseUI) => {
     if (!programId) {
       return;
     }
@@ -189,13 +153,13 @@ export default function ExerciseProgramDetail({
       {exercises.map((row, index) => (
         <Pressable
           key={`${row.name}-${index}`}
-          // onPress={() => handlePress(row)}
+          onPress={() => handlePress(row)}
         >
           <ExerciseCard
             value={row}
             isProgram={true}
             parentStyle={styles.exerciseCard}
-            // handleDelete={() => handleDeleteExercise(row.id)}
+            handleDelete={() => handleDeleteExercise(row.id)}
           />
         </Pressable>
       ))}

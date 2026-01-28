@@ -1,7 +1,6 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Alert,
   Image,
   Modal,
   Pressable,
@@ -12,20 +11,15 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import {
-  createId,
-  initDb,
-  saveProgramExercise,
-  saveTraningDayLog,
-} from "../db";
-import type { ExerciseValue, ProgramExerciseSet } from "../types";
+import { createId, initDb, saveTraningDayLog } from "../db";
+import { createExeriseForLog, type ExerciseUI, type SetUI } from "../types";
 
 const placeholderImage = require("../../assets/images/react-logo.png");
 
 const UNIT_OPTIONS = ["kg", "lbs"];
 
 type ExerciseCardDetailProps = {
-  value?: ExerciseValue;
+  value?: ExerciseUI;
 };
 
 export default function ExerciseCardDetail({
@@ -49,7 +43,9 @@ export default function ExerciseCardDetail({
   }>();
   const isLog = isLogParam === undefined ? true : isLogParam === "true";
   const selectedDate =
-    selectedDateString === undefined ? 0 : Number.parseInt(selectedDateString);
+    selectedDateString === undefined
+      ? 0
+      : new Date(selectedDateString).getTime();
   const programExerciseId =
     programExeerciseIdParam === undefined ? "" : programExeerciseIdParam;
   const resolvedProgramId =
@@ -61,9 +57,10 @@ export default function ExerciseCardDetail({
 
     if (typeof valueParam === "string") {
       try {
-        return JSON.parse(valueParam) as ExerciseValue;
+        return JSON.parse(valueParam) as ExerciseUI;
       } catch {
         return {
+          kind: isLog ? "log" : "program",
           name: "",
           unit: "kg",
           imageUri: null,
@@ -73,6 +70,7 @@ export default function ExerciseCardDetail({
     }
 
     return {
+      kind: isLog ? "log" : "program",
       name: "",
       unit: "kg",
       imageUri: null,
@@ -80,7 +78,7 @@ export default function ExerciseCardDetail({
     };
   }, [valueParam, valueProp]);
 
-  const [value, setValue] = useState<ExerciseValue>(initialValue);
+  const [value, setValue] = useState<ExerciseUI>(initialValue);
   const [exerciseName, setExerciseName] = useState(name ?? "運動項目");
 
   useEffect(() => {
@@ -95,7 +93,7 @@ export default function ExerciseCardDetail({
     );
   }, [value]);
 
-  const handleExerciseChange = (nextValue: ExerciseValue) => {
+  const handleExerciseChange = (nextValue: ExerciseUI) => {
     setValue(nextValue);
   };
 
@@ -109,9 +107,9 @@ export default function ExerciseCardDetail({
     return UNIT_OPTIONS[0] ?? "選擇單位";
   }, [value.unit]);
 
-  const updateField = <Key extends keyof ExerciseValue>(
+  const updateField = <Key extends keyof ExerciseUI>(
     key: Key,
-    fieldValue: ExerciseValue[Key],
+    fieldValue: ExerciseUI[Key],
   ) => {
     handleExerciseChange({
       ...value,
@@ -120,7 +118,7 @@ export default function ExerciseCardDetail({
   };
 
   const handleAddSet = () => {
-    const newSet: ProgramExerciseSet = {
+    const newSet: SetUI = {
       id: `set-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       reps: undefined,
       weight: undefined,
@@ -164,32 +162,31 @@ export default function ExerciseCardDetail({
       await saveTraningDayLog({
         dateId: trainingLogId,
         date: new Date(),
-        exerciseLogs: [
-          {
-            id: createId("exerciseLog"),
-            trainingLogId: trainingLogId,
-            name: value.name,
-            unit: value.unit,
-            imageUri: value.imageUri,
-            sets: value.sets,
-          },
+        exercisesForLog: [
+          createExeriseForLog(
+            createId("exerciseForLog"),
+            trainingLogId,
+            value.name,
+            value.unit,
+            value.imageUri,
+            value.sets,
+          ),
         ],
       });
     } else {
-      if (!resolvedProgramId) {
-        Alert.alert(
-          "Missing program",
-          "Please open this screen from a program.",
-        );
-        return;
-      }
-      const savedId = await saveProgramExercise(
-        programExerciseId,
-        resolvedProgramId,
-        value,
-      );
-      setValue((prev) => ({ ...prev, id: savedId }));
-      router.back();
+      // if (!resolvedProgramId) {
+      //   Alert.alert(
+      //     "Missing program",
+      //     "Please open this screen from a program.",
+      //   );
+      //   return;
+      // }
+      // const savedId = await saveProgramExercise(
+      //   programExerciseId,
+      //   resolvedProgramId,
+      //   ,
+      // );
+      // setValue((prev) => ({ ...prev, id: savedId }));
     }
     router.back();
   };

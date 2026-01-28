@@ -1,33 +1,28 @@
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-
-export type ExerciseProgramValue = {
-    id: string;
-    name: string;
-}
+import { TrainingProgram } from "../types";
 
 type ExerciseProgramProps = {
-    value: ExerciseProgramValue;
-}
+  value: TrainingProgram;
+};
 
-export default function ExerciseProgram({ value } : ExerciseProgramProps) {
-    
-    const handlePress = (id: string, name: string) => {
-        router.push({
-            pathname: "/(tabs)/ExerciseProgramDetail",
-            params: { id: id, name: name},
-        })
-    }
+export default function ExerciseProgram({ value }: ExerciseProgramProps) {
+  const handlePress = (id?: string, name?: string) => {
+    router.push({
+      pathname: "/(tabs)/ExerciseProgramDetail",
+      params: { id: id, name: name },
+    });
+  };
 
-    return(
-        <View style={styles.mainContainer}>
-            <Pressable onPress={() => handlePress(value.id, value.name)}>
-            <View style={styles.card}>
-                <Text style={styles.title}>{value.name || "New Program"}</Text>
-            </View>
-        </Pressable>
+  return (
+    <View style={styles.mainContainer}>
+      <Pressable onPress={() => handlePress(value.id, value.name)}>
+        <View style={styles.card}>
+          <Text style={styles.title}>{value.name || "New Program"}</Text>
         </View>
-    );
+      </Pressable>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

@@ -1,57 +1,83 @@
-export type ProgramExerciseSet = {
-  id: string;
-  exerciseId?: string;
-  reps?: number;
-  weight?: number;
-};
-
-export type ProgramExercise = {
-  id: string;
-  programId: string;
-  name: string;
-  unit: string | null;
-  imageUri?: string | null;
-  setRows: ProgramExerciseSet[];
-};
-
-export type ExerciseProgramValue = {
-  id: string;
-  name: string;
-  exercises?: ProgramExercise[] | [];
-};
-
-export type SetLog = {
-  id: string;
-  exerciseLogId?: string;
-  reps?: number;
-  weight?: number;
-};
-
-export type ExerciseLog = {
+export type TrainingProgram = {
   id?: string;
-  exerciseId?: string;
-  trainingLogId?: number;
-  name: string;
-  unit: string | null;
-  imageUri?: string | null;
-  sets: SetLog[];
+  name?: string;
+  exercisesForProgram?: ExerciseForProgram[];
 };
 
 export type TrainingDayLog = {
   dateId?: number;
   date?: Date;
-  exerciseLogs?: ExerciseLog[];
+  exercisesForLog?: ExerciseForLog[];
 };
 
-export type SetValue = {
+export type SetBase = {
   id: string;
   reps?: number;
   weight?: number;
 };
 
-export type ExerciseValue = {
+export type SetForProgram = SetBase & {
+  programExerciseId?: string;
+};
+
+export type SetForLog = SetBase & {
+  exerciseLogId?: string;
+};
+
+export type SetUI = SetForProgram | SetForLog;
+
+export type BaseExercise = {
+  id?: string;
   name: string;
   unit: string | null;
   imageUri?: string | null;
-  sets: SetValue[];
+  sets: SetBase[];
 };
+
+export type ExerciseForProgram = BaseExercise & {
+  kind: "program";
+  programId?: string;
+  sets: SetForProgram[];
+};
+
+export const createExerciseForProgram = (
+  id: string,
+  programId: string,
+  name: string,
+  unit: string | null,
+  imageUri: string | null,
+  sets: SetForProgram[],
+): ExerciseForProgram => ({
+  kind: "program",
+  id: id,
+  programId: programId,
+  name: name,
+  unit: unit,
+  imageUri: imageUri,
+  sets: sets,
+});
+
+export type ExerciseForLog = BaseExercise & {
+  kind: string;
+  trainingLogId?: number;
+  sets: SetForLog[];
+};
+
+export const createExeriseForLog = (
+  id: string,
+  trainingLogId: number,
+  name: string,
+  unit: string | null,
+  imageUri: string | undefined | null,
+  sets: SetForLog[],
+): ExerciseForLog => ({
+  kind: "log",
+  id: id,
+  trainingLogId: trainingLogId,
+  name: name,
+  unit: unit,
+  imageUri: imageUri,
+  sets: sets,
+});
+
+export type ExerciseUI = ExerciseForProgram | ExerciseForLog;
