@@ -339,7 +339,7 @@ export const saveTraningDayLog = async (value: TrainingDayLog) => {
   try {
     if (exists && value.dateId) {
       await db.runAsync(
-        "UPDATE training_day_log SET date_id = ?, update_time = (strftime('%s','now') * 1000) WHERE id = ?",
+        "UPDATE training_day_log SET date_id = ?, update_time = (strftime('%s','now') * 1000) WHERE date_id = ?",
         [trainingDayLogId],
       );
       await saveExerciseLogsWithSets(value.exercisesForLog ?? []);
