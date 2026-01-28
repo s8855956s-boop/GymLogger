@@ -337,7 +337,7 @@ export const saveTraningDayLog = async (value: TrainingDayLog) => {
 
   await db.execAsync("BEGIN");
   try {
-    if (exists && value.date) {
+    if (exists && value.dateId) {
       await db.runAsync(
         "UPDATE training_day_log SET date_id = ?, update_time = (strftime('%s','now') * 1000) WHERE id = ?",
         [trainingDayLogId],
