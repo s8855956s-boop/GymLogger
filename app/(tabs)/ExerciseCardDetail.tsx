@@ -22,6 +22,25 @@ type ExerciseCardDetailProps = {
   value?: ExerciseUI;
 };
 
+// 去掉重複的set
+const dedupedSets = (exercise: ExerciseUI): ExerciseUI => {
+  const seen = new Set<string>();
+  const dedupedSets = exercise.sets
+    .filter((set) => {
+      const key = set.id;
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+
+  return {
+    ...exercise,
+    sets: dedupedSets,
+  };
+};
+
 export default function ExerciseCardDetail({
   value: valueProp,
 }: ExerciseCardDetailProps) {
@@ -31,33 +50,33 @@ export default function ExerciseCardDetail({
     name,
     programId,
     programExerciseId: programExeerciseIdParam,
+    trainingDayLogId: trainingDayLogIdParam,
     isLog: isLogParam,
-    selectedDate: selectedDateString,
   } = useLocalSearchParams<{
     value?: string;
     name?: string;
     programId?: string;
     programExerciseId?: string;
+    trainingDayLogId?: string;
     isLog?: string;
-    selectedDate?: string;
   }>();
   const isLog = isLogParam === undefined ? true : isLogParam === "true";
-  const selectedDate =
-    selectedDateString === undefined
+  const trainingDayLogId =
+    trainingDayLogIdParam === undefined
       ? 0
-      : new Date(selectedDateString).getTime();
+      : Date.parse(trainingDayLogIdParam);
   const programExerciseId =
     programExeerciseIdParam === undefined ? "" : programExeerciseIdParam;
   const resolvedProgramId =
     typeof programId === "string" ? programId : undefined;
   const initialValue = useMemo(() => {
     if (valueProp) {
-      return valueProp;
+      return dedupedSets(valueProp);
     }
 
     if (typeof valueParam === "string") {
       try {
-        return JSON.parse(valueParam) as ExerciseUI;
+        return dedupedSets(JSON.parse(valueParam) as ExerciseUI);
       } catch {
         return {
           kind: isLog ? "log" : "program",
@@ -158,14 +177,13 @@ export default function ExerciseCardDetail({
 
   const handleSave = async () => {
     if (isLog) {
-      const trainingLogId = selectedDate;
       await saveTraningDayLog({
-        dateId: trainingLogId,
+        dateId: trainingDayLogId,
         date: new Date(),
         exercisesForLog: [
           createExeriseForLog(
             createId("exerciseForLog"),
-            trainingLogId,
+            trainingDayLogId,
             value.name,
             value.unit,
             value.imageUri,

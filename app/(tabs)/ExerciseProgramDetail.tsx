@@ -84,15 +84,13 @@ export default function ExerciseProgramDetail({
   );
 
   const handlePress = (exercise: ExerciseUI) => {
-    if (!programId) {
-      return;
-    }
     router.push({
       pathname: "/ExerciseCardDetail",
       params: {
         value: JSON.stringify(exercise),
         name: exercise.name,
         programId,
+        trainingDayLogId: selectedDate,
         exerciseId: exercise.id ?? "",
       },
     });
