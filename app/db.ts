@@ -108,7 +108,7 @@ export const getTrainingDayLogByDate = async (
   const queryResults = (await db.getAllAsync(
     `
   SELECT
-    el.id AS exerciseLogId, el.training_log_id AS trainingLogId, el.name, el.unit, el.image_uri AS imageUri, sl.reps, sl.weight
+    sl.id, el.id AS exerciseLogId, el.training_log_id AS trainingLogId, el.name, el.unit, el.image_uri AS imageUri, sl.reps, sl.weight
   FROM
     training_day_log tdl
   LEFT JOIN exercise_for_log el ON tdl.date_id = el.training_log_id
@@ -147,7 +147,7 @@ export const getTrainingDayLogByDate = async (
 
     exercisesForLog.push(
       createExeriseForLog(
-        exerciseSets[0].id,
+        exerciseSets[0].exerciseLogId,
         exerciseSets[0].trainingLogId,
         exerciseSets[0].name,
         exerciseSets[0].unit,
@@ -287,6 +287,10 @@ export const saveExerciseLogs = async (values: ExerciseForLog[]) => {
       );
     }),
   );
+
+  await Promise.all(
+    values.map((exerciseLog) => saveSetLogs(exerciseLog.sets, exerciseLog.id)),
+  );
 };
 
 export const saveSetLogs = async (
@@ -320,11 +324,6 @@ export const saveExerciseLogsWithSets = async (
   exerciseLogs: ExerciseForLog[],
 ) => {
   await saveExerciseLogs(exerciseLogs);
-  await Promise.all(
-    exerciseLogs.map((exerciseLog) =>
-      saveSetLogs(exerciseLog.sets, exerciseLog.id),
-    ),
-  );
 };
 
 export const saveTraningDayLog = async (value: TrainingDayLog) => {

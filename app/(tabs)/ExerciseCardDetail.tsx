@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { createId, initDb, saveTraningDayLog } from "../db";
+import { createId, initDb, saveExerciseLogs, saveTraningDayLog } from "../db";
 import { createExeriseForLog, type ExerciseUI, type SetUI } from "../types";
 
 const placeholderImage = require("../../assets/images/react-logo.png");
@@ -25,15 +25,14 @@ type ExerciseCardDetailProps = {
 // 去掉重複的set
 const dedupedSets = (exercise: ExerciseUI): ExerciseUI => {
   const seen = new Set<string>();
-  const dedupedSets = exercise.sets
-    .filter((set) => {
-      const key = set.id;
-      if (seen.has(key)) {
-        return false;
-      }
-      seen.add(key);
-      return true;
-    });
+  const dedupedSets = exercise.sets.filter((set) => {
+    const key = set.id;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
 
   return {
     ...exercise,
@@ -49,24 +48,24 @@ export default function ExerciseCardDetail({
     value: valueParam,
     name,
     programId,
-    programExerciseId: programExeerciseIdParam,
+    exerciseId: exerciseIdParam,
     trainingDayLogId: trainingDayLogIdParam,
     isLog: isLogParam,
   } = useLocalSearchParams<{
     value?: string;
     name?: string;
     programId?: string;
-    programExerciseId?: string;
+    exerciseId?: string;
     trainingDayLogId?: string;
     isLog?: string;
   }>();
   const isLog = isLogParam === undefined ? true : isLogParam === "true";
   const trainingDayLogId =
-    trainingDayLogIdParam === undefined
-      ? 0
-      : Date.parse(trainingDayLogIdParam);
-  const programExerciseId =
-    programExeerciseIdParam === undefined ? "" : programExeerciseIdParam;
+    trainingDayLogIdParam === undefined ? 0 : Date.parse(trainingDayLogIdParam);
+  const exerciseForProgramId =
+    exerciseIdParam === undefined && isLog ? "" : exerciseIdParam;
+  const exerciseLogId =
+    exerciseIdParam === undefined && !isLog ? "" : exerciseIdParam;
   const resolvedProgramId =
     typeof programId === "string" ? programId : undefined;
   const initialValue = useMemo(() => {
@@ -177,20 +176,35 @@ export default function ExerciseCardDetail({
 
   const handleSave = async () => {
     if (isLog) {
-      await saveTraningDayLog({
-        dateId: trainingDayLogId,
-        date: new Date(),
-        exercisesForLog: [
+      if (trainingDayLogId === 0) {
+        await saveTraningDayLog({
+          dateId: trainingDayLogId,
+          date: new Date(),
+          exercisesForLog: [
+            createExeriseForLog(
+              createId("exerciseForLog"),
+              trainingDayLogId,
+              value.name,
+              value.unit,
+              value.imageUri,
+              value.sets,
+            ),
+          ],
+        });
+      } else {
+        await saveExerciseLogs([
           createExeriseForLog(
-            createId("exerciseForLog"),
+            exerciseLogId === undefined
+              ? createId("exerciseForLog")
+              : exerciseLogId,
             trainingDayLogId,
             value.name,
             value.unit,
             value.imageUri,
             value.sets,
           ),
-        ],
-      });
+        ]);
+      }
     } else {
       // if (!resolvedProgramId) {
       //   Alert.alert(
