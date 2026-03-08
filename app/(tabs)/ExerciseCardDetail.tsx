@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { createId, initDb, saveLog, saveLogExercises } from "../db";
+import { createId, initDb, logExists, saveLog, saveLogExercises } from "../db";
 import { createLogExerise, type ExerciseUI, type SetUI } from "../types";
 
 const placeholderImage = require("../../assets/images/react-logo.png");
@@ -172,7 +172,7 @@ export default function ExerciseCardDetail({
 
   const handleSave = async () => {
     if (isLog) {
-      if (logId === 0) {
+      if (!(await logExists(logId))) {
         await saveLog({
           dateId: logId,
           date: new Date(),

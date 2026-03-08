@@ -90,6 +90,17 @@ export const createProgram = async (name: string): Promise<Program> => {
   return { id, name };
 };
 
+export const logExists = async (id: number) => {
+  const db = await getDb();
+
+  const row = await db.getFirstAsync(
+    "SELECT 1 FROM log WHERE date_id = ? LIMIT 1",
+    [id]
+  );
+  return !!row;
+};
+
+
 export const getLogByDate = async (
   date: number,
 ): Promise<Log> => {
@@ -108,7 +119,7 @@ export const getLogByDate = async (
   const queryResults = (await db.getAllAsync(
     `
   SELECT
-    ls.id, le.id AS exerciseLogId, le.training_log_id AS trainingLogId, le.name, le.unit, le.image_uri AS imageUri, ls.reps, ls.weight
+    ls.id, le.id AS exerciseLogId, le.log_id AS trainingLogId, le.name, le.unit, le.image_uri AS imageUri, ls.reps, ls.weight
   FROM
     log tdl
   LEFT JOIN log_exercise le ON tdl.date_id = le.log_id
@@ -242,14 +253,14 @@ export const saveProgramExercise = async (
     );
   }
 
-  await db.runAsync("DELETE FROM log_set WHERE exercise_id = ?", [
+  await db.runAsync("DELETE FROM log_set WHERE log_exercise_id = ?", [
     programExerciseId,
   ]);
   await Promise.all(
     value.sets.map(async (row, index) => {
       const setId = row.id || createId("set");
       await db.runAsync(
-        "INSERT INTO log_set (id, exercise_id, reps, weight, position, create_time, update_time) VALUES (?, ?, ?, ?, ?, (strftime('%s','now') * 1000), (strftime('%s','now') * 1000))",
+        "INSERT INTO log_set (id, log_exercise_id, reps, weight, position, create_time, update_time) VALUES (?, ?, ?, ?, ?, (strftime('%s','now') * 1000), (strftime('%s','now') * 1000))",
         [setId, programExerciseId, row.reps ?? "", row.weight ?? "", index],
       );
     }),
@@ -260,7 +271,7 @@ export const saveProgramExercise = async (
 
 export const deleteLogExercise = async (exerciseId: string) => {
   const db = await getDb();
-  await db.runAsync("DELETE FROM log_set WHERE exercise_id = ?", [exerciseId]);
+  await db.runAsync("DELETE FROM log_set WHERE log_exercise_id = ?", [exerciseId]);
   await db.runAsync("DELETE FROM log_exercise WHERE id = ?", [exerciseId]);
 };
 
@@ -328,10 +339,10 @@ export const saveExerciseLogsWithSets = async (
 
 export const saveLog = async (value: Log) => {
   const db = await getDb();
-  const LogId = value.dateId ?? null;
+  const logId = value.dateId ?? null;
   const exists = (await db.getFirstAsync(
     "SELECT date_id FROM log WHERE date_id = ?",
-    [LogId],
+    [logId],
   )) as { dateId: string } | undefined;
 
   await db.execAsync("BEGIN");
@@ -339,13 +350,13 @@ export const saveLog = async (value: Log) => {
     if (exists && value.dateId) {
       await db.runAsync(
         "UPDATE log SET date_id = ?, update_time = (strftime('%s','now') * 1000) WHERE date_id = ?",
-        [LogId],
+        [logId],
       );
       await saveExerciseLogsWithSets(value.logExercises ?? []);
     } else {
       await db.runAsync(
         "INSERT INTO log (date_id, date, create_time, update_time) VALUES (?, ?, (strftime('%s','now') * 1000), (strftime('%s','now') * 1000))",
-        [LogId, LogId],
+        [logId, logId],
       );
       await saveExerciseLogsWithSets(value.logExercises ?? []);
     }

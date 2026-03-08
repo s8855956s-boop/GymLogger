@@ -56,10 +56,10 @@ export default function ExerciseProgramDetail({
       if (
         log != null &&
         log !== undefined &&
-        log.logForExercise != null &&
-        log.logForExercise !== undefined
+        log.logExercises != null &&
+        log.logExercises !== undefined
       ) {
-        setExercises(log.logForExercise);
+        setExercises(log.logExercises);
         return;
       } else {
         setExercises([]);
@@ -100,7 +100,7 @@ export default function ExerciseProgramDetail({
     if (isLog) {
       router.push({
         pathname: "/ExerciseCardDetail",
-        params: { selectedDate: selectedDate },
+        params: { logId: selectedDate },
       });
     } else if (!programId) {
       router.push({
