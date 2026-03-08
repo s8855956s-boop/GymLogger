@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import ExerciseProgram from "../components/ExerciseProgram";
 import { createProgram, initDb, listPrograms } from "../db";
-import type { TrainingProgram } from "../types";
+import type { Program } from "../types";
 
 export default function ExerciseProgramPage() {
-  const [programs, setPrograms] = useState<TrainingProgram[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
 
   const loadPrograms = useCallback(async () => {
     setPrograms(await listPrograms());

@@ -11,9 +11,9 @@ import {
 } from "react-native";
 import ExerciseCard from "../components/ExerciseCard";
 import {
-  deleteExercise,
+  deleteLogExercise,
   getExercisesForProgramByProgramId,
-  getTrainingDayLogByDate,
+  getLogByDate,
   initDb,
 } from "../db";
 import type { ExerciseUI } from "../types";
@@ -50,16 +50,16 @@ export default function ExerciseProgramDetail({
 
   const loadExercises = useCallback(async () => {
     if (isLog) {
-      const trainingDayLog = await getTrainingDayLogByDate(
+      const log = await getLogByDate(
         Date.parse(selectedDate ?? ""),
       );
       if (
-        trainingDayLog != null &&
-        trainingDayLog !== undefined &&
-        trainingDayLog.exercisesForLog != null &&
-        trainingDayLog.exercisesForLog !== undefined
+        log != null &&
+        log !== undefined &&
+        log.logForExercise != null &&
+        log.logForExercise !== undefined
       ) {
-        setExercises(trainingDayLog.exercisesForLog);
+        setExercises(log.logForExercise);
         return;
       } else {
         setExercises([]);
@@ -90,7 +90,7 @@ export default function ExerciseProgramDetail({
         value: JSON.stringify(exercise),
         name: exercise.name,
         programId,
-        trainingDayLogId: selectedDate,
+        logId: selectedDate,
         exerciseId: exercise.id ?? "",
       },
     });
@@ -128,7 +128,7 @@ export default function ExerciseProgramDetail({
           style: "destructive",
           onPress: () => {
             void (async () => {
-              await deleteExercise(exerciseId);
+              await deleteLogExercise(exerciseId);
               await loadExercises();
             })();
           },

@@ -1,9 +1,9 @@
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { TrainingProgram } from "../types";
+import { Program } from "../types";
 
 type ExerciseProgramProps = {
-  value: TrainingProgram;
+  value: Program;
 };
 
 export default function ExerciseProgram({ value }: ExerciseProgramProps) {

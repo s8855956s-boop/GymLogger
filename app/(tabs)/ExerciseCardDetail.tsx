@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { createId, initDb, saveTraningDayLog } from "../db";
-import { createExeriseForLog, type ExerciseUI, type SetUI } from "../types";
+import { createId, initDb, saveLog } from "../db";
+import { createLogExerise, type ExerciseUI, type SetUI } from "../types";
 
 const placeholderImage = require("../../assets/images/react-logo.png");
 
@@ -50,21 +50,21 @@ export default function ExerciseCardDetail({
     name,
     programId,
     programExerciseId: programExeerciseIdParam,
-    trainingDayLogId: trainingDayLogIdParam,
+    logId: logIdParam,
     isLog: isLogParam,
   } = useLocalSearchParams<{
     value?: string;
     name?: string;
     programId?: string;
     programExerciseId?: string;
-    trainingDayLogId?: string;
+    logId?: string;
     isLog?: string;
   }>();
   const isLog = isLogParam === undefined ? true : isLogParam === "true";
-  const trainingDayLogId =
-    trainingDayLogIdParam === undefined
+  const logId =
+    logIdParam === undefined
       ? 0
-      : Date.parse(trainingDayLogIdParam);
+      : Date.parse(logIdParam);
   const programExerciseId =
     programExeerciseIdParam === undefined ? "" : programExeerciseIdParam;
   const resolvedProgramId =
@@ -177,13 +177,13 @@ export default function ExerciseCardDetail({
 
   const handleSave = async () => {
     if (isLog) {
-      await saveTraningDayLog({
-        dateId: trainingDayLogId,
+      await saveLog({
+        dateId: logId,
         date: new Date(),
-        exercisesForLog: [
-          createExeriseForLog(
-            createId("exerciseForLog"),
-            trainingDayLogId,
+        logForExercise: [
+          createLogExerise(
+            createId("LogExercise"),
+            logId,
             value.name,
             value.unit,
             value.imageUri,

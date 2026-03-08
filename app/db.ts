@@ -1,12 +1,12 @@
 import * as SQLite from "expo-sqlite";
 import {
-  createExerciseForProgram,
-  createExeriseForLog,
-  ExerciseForProgram,
+  createLogExerise,
+  createProgramExercise,
+  ProgramExercise,
   SetForLog,
-  type ExerciseForLog,
-  type TrainingDayLog,
-  type TrainingProgram,
+  type Log,
+  type LogExercise,
+  type Program,
 } from "./types";
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
@@ -24,13 +24,13 @@ export const initDb = async () => {
   const db = await getDb();
   await db.execAsync(`
     PRAGMA journal_mode = WAL;
-    CREATE TABLE IF NOT EXISTS training_program (
+    CREATE TABLE IF NOT EXISTS program (
       id TEXT PRIMARY KEY NOT NULL,
       name TEXT NOT NULL,
       create_time INTEGER NOT NULL,
       update_time INTEGER NOT NULL
     );
-    CREATE TABLE IF NOT EXISTS exercise_for_program (
+    CREATE TABLE IF NOT EXISTS program_exercise (
       id TEXT PRIMARY KEY NOT NULL,
       program_id TEXT,
       name TEXT NOT NULL,
@@ -39,32 +39,32 @@ export const initDb = async () => {
       create_time INTEGER NOT NULL,
       update_time INTEGER NOT NULL
     );
-    CREATE TABLE IF NOT EXISTS set_for_program (
+    CREATE TABLE IF NOT EXISTS program_set (
       id TEXT PRIMARY KEY NOT NULL,
-      exercise_id TEXT,
+      program_exercise_id TEXT,
       reps INTEGER,
       weight INTEGER,
       create_time INTEGER NOT NULL,
       update_time INTEGER NOT NULL
     );
-    CREATE TABLE IF NOT EXISTS set_log (
+    CREATE TABLE IF NOT EXISTS log_set (
       id TEXT PRIMARY KEY NOT NULL,
-      exercise_log_id TEXT,
+      log_exercise_id TEXT,
       reps INTEGER,
       weight INTEGER,
       create_time INTEGER NOT NULL,
       update_time INTEGER NOT NULL
     );
-    CREATE TABLE IF NOT EXISTS exercise_for_log (
+    CREATE TABLE IF NOT EXISTS log_exercise (
       id TEXT PRIMARY KEY NOT NULL,
-      training_log_id TEXT,
+      log_id TEXT,
       name TEXT NOT NULL,
       unit TEXT,
       image_uri TEXT,
       create_time INTEGER NOT NULL,
       update_time INTEGER NOT NULL
     );
-    CREATE TABLE IF NOT EXISTS training_day_log (
+    CREATE TABLE IF NOT EXISTS log (
       date_id INTEGER PRIMARY KEY NOT NULL,
       date INTEGER NOT NULL,
       create_time INTEGER NOT NULL,
@@ -73,14 +73,14 @@ export const initDb = async () => {
   `);
 };
 
-export const listPrograms = async (): Promise<TrainingProgram[]> => {
+export const listPrograms = async (): Promise<Program[]> => {
   const db = await getDb();
   return (await db.getAllAsync(
     "SELECT id, name FROM program ORDER BY create_time DESC;",
-  )) as TrainingProgram[];
+  )) as Program[];
 };
 
-export const createProgram = async (name: string): Promise<TrainingProgram> => {
+export const createProgram = async (name: string): Promise<Program> => {
   const db = await getDb();
   const id = createId("program");
   await db.runAsync(
@@ -90,9 +90,9 @@ export const createProgram = async (name: string): Promise<TrainingProgram> => {
   return { id, name };
 };
 
-export const getTrainingDayLogByDate = async (
+export const getLogByDate = async (
   date: number,
-): Promise<TrainingDayLog> => {
+): Promise<Log> => {
   const db = await getDb();
 
   type ExerciseSets = {
@@ -108,11 +108,11 @@ export const getTrainingDayLogByDate = async (
   const queryResults = (await db.getAllAsync(
     `
   SELECT
-    el.id AS exerciseLogId, el.training_log_id AS trainingLogId, el.name, el.unit, el.image_uri AS imageUri, sl.reps, sl.weight
+    le.id AS exerciseLogId, le.log_id AS trainingLogId, le.name, le.unit, le.image_uri AS imageUri, ls.reps, ls.weight
   FROM
-    training_day_log tdl
-  LEFT JOIN exercise_for_log el ON tdl.date_id = el.training_log_id
-  LEFT JOIN set_log sl ON el.id = sl.exercise_log_id
+    log tdl
+  LEFT JOIN log_exercise le ON tdl.date_id = le.log_id
+  LEFT JOIN log_set ls ON le.id = ls.log_exercise_id
   WHERE tdl.date_id = ?
   `,
     [date],
@@ -132,7 +132,7 @@ export const getTrainingDayLogByDate = async (
     groupedByExerciseId.get(exerciseSet.exerciseLogId)!.push(exerciseSet);
   }
 
-  let exercisesForLog: ExerciseForLog[] = [];
+  let logForExercise: LogExercise[] = [];
   for (const key of groupedByExerciseId.keys()) {
     const exerciseSets = groupedByExerciseId.get(key);
     if (exerciseSets === undefined) continue;
@@ -145,8 +145,8 @@ export const getTrainingDayLogByDate = async (
       };
     });
 
-    exercisesForLog.push(
-      createExeriseForLog(
+    logForExercise.push(
+      createLogExerise(
         exerciseSets[0].id,
         exerciseSets[0].trainingLogId,
         exerciseSets[0].name,
@@ -160,16 +160,16 @@ export const getTrainingDayLogByDate = async (
   return {
     dateId: distinctTrainingLogId,
     date: new Date(date),
-    exercisesForLog: exercisesForLog,
+    logForExercise: logForExercise,
   };
 };
 
 export const getExercisesForProgramByProgramId = async (
   programId: string,
-): Promise<ExerciseForProgram[]> => {
+): Promise<ProgramExercise[]> => {
   const db = await getDb();
   const exercises = (await db.getAllAsync(
-    "SELECT id, program_id AS programId, name, unit, image_uri AS imageUri FROM exercise_for_program WHERE program_id = ? ORDER BY create_time DESC",
+    "SELECT id, program_id AS programId, name, unit, image_uri AS imageUri FROM program_exercise WHERE program_id = ? ORDER BY create_time DESC",
     [programId],
   )) as {
     id: string;
@@ -184,9 +184,9 @@ export const getExercisesForProgramByProgramId = async (
     exerciseIds.length === 0
       ? []
       : ((await db.getAllAsync(
-          `SELECT id, exercise_id AS programExerciseId, reps, weight
-           FROM set_for_program
-           WHERE exercise_id IN (${exerciseIds.map(() => "?").join(", ")})
+          `SELECT id, program_exercise_id AS programExerciseId, reps, weight
+           FROM program_set
+           WHERE program_exercise_id IN (${exerciseIds.map(() => "?").join(", ")})
            ORDER BY position ASC`,
           exerciseIds,
         )) as {
@@ -201,7 +201,7 @@ export const getExercisesForProgramByProgramId = async (
       (row) => row.programExerciseId === exercise.id,
     );
 
-    return createExerciseForProgram(
+    return createProgramExercise(
       exercise.id,
       exercise.programId,
       exercise.name,
@@ -215,7 +215,7 @@ export const getExercisesForProgramByProgramId = async (
 export const saveProgramExercise = async (
   id: string,
   programId: string,
-  value: ExerciseForProgram,
+  value: ProgramExercise,
 ): Promise<string> => {
   const db = await getDb();
   const programExerciseId = id ?? createId("programExercise");
@@ -242,14 +242,14 @@ export const saveProgramExercise = async (
     );
   }
 
-  await db.runAsync("DELETE FROM set_log WHERE exercise_id = ?", [
+  await db.runAsync("DELETE FROM log_set WHERE exercise_id = ?", [
     programExerciseId,
   ]);
   await Promise.all(
     value.sets.map(async (row, index) => {
       const setId = row.id || createId("set");
       await db.runAsync(
-        "INSERT INTO set_log (id, exercise_id, reps, weight, position, create_time, update_time) VALUES (?, ?, ?, ?, ?, (strftime('%s','now') * 1000), (strftime('%s','now') * 1000))",
+        "INSERT INTO log_set (id, exercise_id, reps, weight, position, create_time, update_time) VALUES (?, ?, ?, ?, ?, (strftime('%s','now') * 1000), (strftime('%s','now') * 1000))",
         [setId, programExerciseId, row.reps ?? "", row.weight ?? "", index],
       );
     }),
@@ -258,21 +258,21 @@ export const saveProgramExercise = async (
   return programExerciseId;
 };
 
-export const deleteExercise = async (exerciseId: string) => {
+export const deleteLogExercise = async (exerciseId: string) => {
   const db = await getDb();
-  await db.runAsync("DELETE FROM set_log WHERE exercise_id = ?", [exerciseId]);
-  await db.runAsync("DELETE FROM exercise_for_log WHERE id = ?", [exerciseId]);
+  await db.runAsync("DELETE FROM log_set WHERE exercise_id = ?", [exerciseId]);
+  await db.runAsync("DELETE FROM log_exercise WHERE id = ?", [exerciseId]);
 };
 
-export const saveExerciseLogs = async (values: ExerciseForLog[]) => {
+export const saveLogExercises = async (values: LogExercise[]) => {
   const db = await getDb();
   await Promise.all(
     values.map(async (value) => {
       await db.runAsync(
-        `INSERT INTO exercise_for_log (id, training_log_id, name, unit, image_uri, create_time, update_time)
+        `INSERT INTO log_exercise (id, log_id, name, unit, image_uri, create_time, update_time)
       VALUES (?, ?, ?, ?, ?, (strftime('%s','now') * 1000), (strftime('%s','now') * 1000))
       ON CONFLICT(id) DO UPDATE SET
-        training_log_id = excluded.training_log_id,
+        log_id = excluded.log_id,
         name = excluded.name,
         unit = excluded.unit,
         image_uri = excluded.image_uri,
@@ -297,11 +297,11 @@ export const saveSetLogs = async (
   await Promise.all(
     values.map(async (value) => {
       await db.runAsync(
-        `INSERT INTO set_log (id, exercise_log_id, reps, weight, create_time, update_time)
+        `INSERT INTO log_set (id, log_exercise_id, reps, weight, create_time, update_time)
       VALUES (?, ?, ?, ?, (strftime('%s','now') * 1000), (strftime('%s','now') * 1000))
       ON CONFLICT(id) DO UPDATE SET
         id = excluded.id,
-        exercise_log_id = excluded.exercise_log_id,
+        log_exercise_id = excluded.log_exercise_id,
         reps = excluded.reps,
         weight = excluded.weight,
         update_time = (strftime('%s','now') * 1000)`,
@@ -317,9 +317,9 @@ export const saveSetLogs = async (
 };
 
 export const saveExerciseLogsWithSets = async (
-  exerciseLogs: ExerciseForLog[],
+  exerciseLogs: LogExercise[],
 ) => {
-  await saveExerciseLogs(exerciseLogs);
+  await saveLogExercises(exerciseLogs);
   await Promise.all(
     exerciseLogs.map((exerciseLog) =>
       saveSetLogs(exerciseLog.sets, exerciseLog.id),
@@ -327,28 +327,28 @@ export const saveExerciseLogsWithSets = async (
   );
 };
 
-export const saveTraningDayLog = async (value: TrainingDayLog) => {
+export const saveLog = async (value: Log) => {
   const db = await getDb();
-  const trainingDayLogId = value.dateId ?? null;
+  const LogId = value.dateId ?? null;
   const exists = (await db.getFirstAsync(
-    "SELECT date_id FROM training_day_log WHERE date_id = ?",
-    [trainingDayLogId],
+    "SELECT date_id FROM log WHERE date_id = ?",
+    [LogId],
   )) as { dateId: string } | undefined;
 
   await db.execAsync("BEGIN");
   try {
     if (exists && value.dateId) {
       await db.runAsync(
-        "UPDATE training_day_log SET date_id = ?, update_time = (strftime('%s','now') * 1000) WHERE date_id = ?",
-        [trainingDayLogId],
+        "UPDATE log SET date_id = ?, update_time = (strftime('%s','now') * 1000) WHERE date_id = ?",
+        [LogId],
       );
-      await saveExerciseLogsWithSets(value.exercisesForLog ?? []);
+      await saveExerciseLogsWithSets(value.logForExercise ?? []);
     } else {
       await db.runAsync(
-        "INSERT INTO training_day_log (date_id, date, create_time, update_time) VALUES (?, ?, (strftime('%s','now') * 1000), (strftime('%s','now') * 1000))",
-        [trainingDayLogId, trainingDayLogId],
+        "INSERT INTO log (date_id, date, create_time, update_time) VALUES (?, ?, (strftime('%s','now') * 1000), (strftime('%s','now') * 1000))",
+        [LogId, LogId],
       );
-      await saveExerciseLogsWithSets(value.exercisesForLog ?? []);
+      await saveExerciseLogsWithSets(value.logForExercise ?? []);
     }
     await db.execAsync("COMMIT");
   } catch (error) {

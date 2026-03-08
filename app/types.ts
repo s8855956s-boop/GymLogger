@@ -1,13 +1,13 @@
-export type TrainingProgram = {
+export type Program = {
   id?: string;
   name?: string;
-  exercisesForProgram?: ExerciseForProgram[];
+  exercisesForProgram?: ProgramExercise[];
 };
 
-export type TrainingDayLog = {
+export type Log = {
   dateId?: number;
   date?: Date;
-  exercisesForLog?: ExerciseForLog[];
+  logForExercise?: LogExercise[];
 };
 
 export type SetBase = {
@@ -34,20 +34,20 @@ export type BaseExercise = {
   sets: SetBase[];
 };
 
-export type ExerciseForProgram = BaseExercise & {
+export type ProgramExercise = BaseExercise & {
   kind: "program";
   programId?: string;
   sets: SetForProgram[];
 };
 
-export const createExerciseForProgram = (
+export const createProgramExercise = (
   id: string,
   programId: string,
   name: string,
   unit: string | null,
   imageUri: string | null,
   sets: SetForProgram[],
-): ExerciseForProgram => ({
+): ProgramExercise => ({
   kind: "program",
   id: id,
   programId: programId,
@@ -57,20 +57,20 @@ export const createExerciseForProgram = (
   sets: sets,
 });
 
-export type ExerciseForLog = BaseExercise & {
+export type LogExercise = BaseExercise & {
   kind: string;
   trainingLogId?: number;
   sets: SetForLog[];
 };
 
-export const createExeriseForLog = (
+export const createLogExerise = (
   id: string,
   trainingLogId: number,
   name: string,
   unit: string | null,
   imageUri: string | undefined | null,
   sets: SetForLog[],
-): ExerciseForLog => ({
+): LogExercise => ({
   kind: "log",
   id: id,
   trainingLogId: trainingLogId,
@@ -80,4 +80,4 @@ export const createExeriseForLog = (
   sets: sets,
 });
 
-export type ExerciseUI = ExerciseForProgram | ExerciseForLog;
+export type ExerciseUI = ProgramExercise | LogExercise;
