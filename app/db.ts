@@ -108,7 +108,7 @@ export const getLogByDate = async (
   const queryResults = (await db.getAllAsync(
     `
   SELECT
-    le.id AS exerciseLogId, le.log_id AS trainingLogId, le.name, le.unit, le.image_uri AS imageUri, ls.reps, ls.weight
+    ls.id, le.id AS exerciseLogId, le.training_log_id AS trainingLogId, le.name, le.unit, le.image_uri AS imageUri, ls.reps, ls.weight
   FROM
     log tdl
   LEFT JOIN log_exercise le ON tdl.date_id = le.log_id
@@ -132,7 +132,7 @@ export const getLogByDate = async (
     groupedByExerciseId.get(exerciseSet.exerciseLogId)!.push(exerciseSet);
   }
 
-  let logForExercise: LogExercise[] = [];
+  let logExercises: LogExercise[] = [];
   for (const key of groupedByExerciseId.keys()) {
     const exerciseSets = groupedByExerciseId.get(key);
     if (exerciseSets === undefined) continue;
@@ -145,7 +145,7 @@ export const getLogByDate = async (
       };
     });
 
-    logForExercise.push(
+    logExercises.push(
       createLogExerise(
         exerciseSets[0].id,
         exerciseSets[0].trainingLogId,
@@ -160,7 +160,7 @@ export const getLogByDate = async (
   return {
     dateId: distinctTrainingLogId,
     date: new Date(date),
-    logForExercise: logForExercise,
+    logExercises: logExercises,
   };
 };
 
@@ -279,13 +279,17 @@ export const saveLogExercises = async (values: LogExercise[]) => {
         update_time = (strftime('%s','now') * 1000)`,
         [
           value.id ?? null,
-          value.trainingLogId ?? null,
+          value.logId ?? null,
           value.name,
           value.unit,
           value.imageUri ?? null,
         ],
       );
     }),
+  );
+
+  await Promise.all(
+    values.map((exerciseLog) => saveSetLogs(exerciseLog.sets, exerciseLog.id)),
   );
 };
 
@@ -317,14 +321,9 @@ export const saveSetLogs = async (
 };
 
 export const saveExerciseLogsWithSets = async (
-  exerciseLogs: LogExercise[],
+  LogExercises: LogExercise[],
 ) => {
-  await saveLogExercises(exerciseLogs);
-  await Promise.all(
-    exerciseLogs.map((exerciseLog) =>
-      saveSetLogs(exerciseLog.sets, exerciseLog.id),
-    ),
-  );
+  await saveLogExercises(LogExercises);
 };
 
 export const saveLog = async (value: Log) => {
@@ -342,13 +341,13 @@ export const saveLog = async (value: Log) => {
         "UPDATE log SET date_id = ?, update_time = (strftime('%s','now') * 1000) WHERE date_id = ?",
         [LogId],
       );
-      await saveExerciseLogsWithSets(value.logForExercise ?? []);
+      await saveExerciseLogsWithSets(value.logExercises ?? []);
     } else {
       await db.runAsync(
         "INSERT INTO log (date_id, date, create_time, update_time) VALUES (?, ?, (strftime('%s','now') * 1000), (strftime('%s','now') * 1000))",
         [LogId, LogId],
       );
-      await saveExerciseLogsWithSets(value.logForExercise ?? []);
+      await saveExerciseLogsWithSets(value.logExercises ?? []);
     }
     await db.execAsync("COMMIT");
   } catch (error) {

@@ -7,7 +7,7 @@ export type Program = {
 export type Log = {
   dateId?: number;
   date?: Date;
-  logForExercise?: LogExercise[];
+  logExercises?: LogExercise[];
 };
 
 export type SetBase = {
@@ -59,13 +59,13 @@ export const createProgramExercise = (
 
 export type LogExercise = BaseExercise & {
   kind: string;
-  trainingLogId?: number;
+  logId?: number;
   sets: SetForLog[];
 };
 
 export const createLogExerise = (
   id: string,
-  trainingLogId: number,
+  logId: number,
   name: string,
   unit: string | null,
   imageUri: string | undefined | null,
@@ -73,7 +73,7 @@ export const createLogExerise = (
 ): LogExercise => ({
   kind: "log",
   id: id,
-  trainingLogId: trainingLogId,
+  logId: logId,
   name: name,
   unit: unit,
   imageUri: imageUri,

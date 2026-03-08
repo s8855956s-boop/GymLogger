@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { createId, initDb, saveLog } from "../db";
+import { createId, initDb, saveLog, saveLogExercises } from "../db";
 import { createLogExerise, type ExerciseUI, type SetUI } from "../types";
 
 const placeholderImage = require("../../assets/images/react-logo.png");
@@ -25,15 +25,14 @@ type ExerciseCardDetailProps = {
 // 去掉重複的set
 const dedupedSets = (exercise: ExerciseUI): ExerciseUI => {
   const seen = new Set<string>();
-  const dedupedSets = exercise.sets
-    .filter((set) => {
-      const key = set.id;
-      if (seen.has(key)) {
-        return false;
-      }
-      seen.add(key);
-      return true;
-    });
+  const dedupedSets = exercise.sets.filter((set) => {
+    const key = set.id;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
 
   return {
     ...exercise,
@@ -49,26 +48,22 @@ export default function ExerciseCardDetail({
     value: valueParam,
     name,
     programId,
-    programExerciseId: programExeerciseIdParam,
+    exerciseId: exerciseIdParam,
     logId: logIdParam,
     isLog: isLogParam,
   } = useLocalSearchParams<{
     value?: string;
     name?: string;
     programId?: string;
-    programExerciseId?: string;
+    exerciseId?: string;
     logId?: string;
     isLog?: string;
   }>();
   const isLog = isLogParam === undefined ? true : isLogParam === "true";
   const logId =
-    logIdParam === undefined
-      ? 0
-      : Date.parse(logIdParam);
-  const programExerciseId =
-    programExeerciseIdParam === undefined ? "" : programExeerciseIdParam;
-  const resolvedProgramId =
-    typeof programId === "string" ? programId : undefined;
+    logIdParam === undefined ? 0 : Date.parse(logIdParam);
+  const logExerciseId =
+    exerciseIdParam === undefined && !isLog ? "" : exerciseIdParam;
   const initialValue = useMemo(() => {
     if (valueProp) {
       return dedupedSets(valueProp);
@@ -177,20 +172,35 @@ export default function ExerciseCardDetail({
 
   const handleSave = async () => {
     if (isLog) {
-      await saveLog({
-        dateId: logId,
-        date: new Date(),
-        logForExercise: [
+      if (logId === 0) {
+        await saveLog({
+          dateId: logId,
+          date: new Date(),
+          logExercises: [
+            createLogExerise(
+              createId("logExercise"),
+              logId,
+              value.name,
+              value.unit,
+              value.imageUri,
+              value.sets,
+            ),
+          ],
+        });
+      } else {
+        await saveLogExercises([
           createLogExerise(
-            createId("LogExercise"),
+            logExerciseId === undefined
+              ? createId("logExercise")
+              : logExerciseId,
             logId,
             value.name,
             value.unit,
             value.imageUri,
             value.sets,
           ),
-        ],
-      });
+        ]);
+      }
     } else {
       // if (!resolvedProgramId) {
       //   Alert.alert(
