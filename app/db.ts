@@ -108,8 +108,8 @@ export const getLogByDate = async (
 
   type ExerciseSets = {
     id: string;
-    exerciseLogId: string;
-    trainingLogId: number;
+    logExerciseId: string;
+    logId: number;
     name: string;
     unit: string;
     imageUri: string;
@@ -119,7 +119,7 @@ export const getLogByDate = async (
   const queryResults = (await db.getAllAsync(
     `
   SELECT
-    ls.id, le.id AS exerciseLogId, le.log_id AS trainingLogId, le.name, le.unit, le.image_uri AS imageUri, ls.reps, ls.weight
+    ls.id, le.id AS logExerciseId, le.log_id AS logId, le.name, le.unit, le.image_uri AS imageUri, ls.reps, ls.weight
   FROM
     log tdl
   LEFT JOIN log_exercise le ON tdl.date_id = le.log_id
@@ -130,17 +130,17 @@ export const getLogByDate = async (
   )) as ExerciseSets[];
   if (queryResults.length < 1) return {};
 
-  const distinctTrainingLogId = queryResults[0].trainingLogId;
+  const distinctLogId = queryResults[0].logId;
 
   let filteredResults = queryResults.filter(
-    (result) => result.trainingLogId === distinctTrainingLogId,
+    (result) => result.logId === distinctLogId,
   );
   const groupedByExerciseId = new Map<string, ExerciseSets[]>();
 
   for (const exerciseSet of filteredResults) {
-    if (!groupedByExerciseId.has(exerciseSet.exerciseLogId))
-      groupedByExerciseId.set(exerciseSet.exerciseLogId, []);
-    groupedByExerciseId.get(exerciseSet.exerciseLogId)!.push(exerciseSet);
+    if (!groupedByExerciseId.has(exerciseSet.logExerciseId))
+      groupedByExerciseId.set(exerciseSet.logExerciseId, []);
+    groupedByExerciseId.get(exerciseSet.logExerciseId)!.push(exerciseSet);
   }
 
   let logExercises: LogExercise[] = [];
@@ -150,7 +150,7 @@ export const getLogByDate = async (
     const setRows = exerciseSets?.map((set) => {
       return {
         id: set.id,
-        exerciseLogId: set.exerciseLogId,
+        logExerciseId: set.logExerciseId,
         reps: set.reps == null ? undefined : Number(set.reps),
         weight: set.weight == null ? undefined : Number(set.weight),
       };
@@ -158,8 +158,8 @@ export const getLogByDate = async (
 
     logExercises.push(
       createLogExerise(
-        exerciseSets[0].id,
-        exerciseSets[0].trainingLogId,
+        exerciseSets[0].logExerciseId,
+        exerciseSets[0].logId,
         exerciseSets[0].name,
         exerciseSets[0].unit,
         exerciseSets[0].imageUri,
@@ -169,7 +169,7 @@ export const getLogByDate = async (
   }
 
   return {
-    dateId: distinctTrainingLogId,
+    dateId: distinctLogId,
     date: new Date(date),
     logExercises: logExercises,
   };
@@ -306,7 +306,7 @@ export const saveLogExercises = async (values: LogExercise[]) => {
 
 export const saveSetLogs = async (
   values: SetForLog[],
-  exerciseLogId?: string,
+  logExerciseId?: string,
 ) => {
   const db = await getDb();
   await Promise.all(
@@ -322,7 +322,7 @@ export const saveSetLogs = async (
         update_time = (strftime('%s','now') * 1000)`,
         [
           value.id ?? null,
-          exerciseLogId ?? null,
+          logExerciseId ?? null,
           value.reps ?? null,
           value.weight ?? null,
         ],
