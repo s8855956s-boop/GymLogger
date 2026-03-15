@@ -300,11 +300,11 @@ export const saveLogExercises = async (values: LogExercise[]) => {
   );
 
   await Promise.all(
-    values.map((exerciseLog) => saveSetLogs(exerciseLog.sets, exerciseLog.id)),
+    values.map((exerciseLog) => saveLogSets(exerciseLog.sets, exerciseLog.id)),
   );
 };
 
-export const saveSetLogs = async (
+export const saveLogSets = async (
   values: SetForLog[],
   logExerciseId?: string,
 ) => {
@@ -329,6 +329,22 @@ export const saveSetLogs = async (
       );
     }),
   );
+
+const ids = values.flatMap((value) => (value.id ? [value.id] : []));
+
+if (logExerciseId) {
+  if (ids.length === 0) {
+    await db.runAsync("DELETE FROM log_set WHERE log_exercise_id = ?", [
+      logExerciseId,
+    ]);
+  } else {
+    const placeholders = ids.map(() => "?").join(", ");
+    await db.runAsync(
+      `DELETE FROM log_set WHERE log_exercise_id = ? AND id NOT IN (${placeholders})`,
+      [logExerciseId, ...ids],
+    );
+  }
+}
 };
 
 export const saveExerciseLogsWithSets = async (
