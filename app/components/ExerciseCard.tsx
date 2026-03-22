@@ -6,10 +6,10 @@ import {
   View,
   ViewStyle,
 } from "react-native";
-import type { ExerciseValue } from "../types";
+import type { LogExercise } from "../types";
 
 type ExerciseCardProps = {
-  value: ExerciseValue;
+  value: LogExercise;
   isProgram?: boolean;
   parentStyle?: StyleProp<ViewStyle>;
   handleDelete?: () => void;
@@ -49,10 +49,10 @@ export default function ExerciseCard({
       return (
         <View style={styles.row}>
           <Text style={styles.rowText}>共{value.sets.length}組</Text>
-          <Text style={styles.rowText}>每組{value.sets[0].reps || "-"} 次</Text>
+          <Text style={styles.rowText}>每組{value.sets[0] ? value.sets[0].reps : "-"} 次</Text>
           <Text style={styles.dot}>·</Text>
           <Text style={styles.rowText}>
-            {value.sets[0].weight || "-"}
+            {value.sets[0] ? value.sets[0].weight : "-"}
             {value.unit ? ` ${value.unit}` : ""}
           </Text>
         </View>
@@ -88,10 +88,10 @@ export default function ExerciseCard({
               <View style={styles.setIndex}>
                 <Text style={styles.index}>{index + 1}</Text>
               </View>
-              <Text style={styles.rowText}>{row.reps || "-"} 次</Text>
+              <Text style={styles.rowText}>{row ? row.reps : "-"} 次</Text>
               <Text style={styles.dot}>·</Text>
               <Text style={styles.rowText}>
-                {row.weight || "-"}
+                {row ? row.weight : "-"}
                 {value.unit ? ` ${value.unit}` : ""}
               </Text>
             </View>

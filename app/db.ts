@@ -2,8 +2,8 @@ import * as SQLite from "expo-sqlite";
 import {
   createLogExerise,
   createProgramExercise,
+  LogSet,
   ProgramExercise,
-  SetForLog,
   type Log,
   type LogExercise,
   type Program,
@@ -147,7 +147,7 @@ export const getLogByDate = async (
   for (const key of groupedByExerciseId.keys()) {
     const exerciseSets = groupedByExerciseId.get(key);
     if (exerciseSets === undefined) continue;
-    const setRows = exerciseSets?.map((set) => {
+    const setRows = exerciseSets?.filter((set) => set.id).map((set) => {
       return {
         id: set.id,
         logExerciseId: set.logExerciseId,
@@ -155,6 +155,8 @@ export const getLogByDate = async (
         weight: set.weight == null ? undefined : Number(set.weight),
       };
     });
+
+    
 
     logExercises.push(
       createLogExerise(
@@ -305,7 +307,7 @@ export const saveLogExercises = async (values: LogExercise[]) => {
 };
 
 export const saveLogSets = async (
-  values: SetForLog[],
+  values: LogSet[],
   logExerciseId?: string,
 ) => {
   const db = await getDb();

@@ -20,11 +20,11 @@ export type SetForProgram = SetBase & {
   programExerciseId?: string;
 };
 
-export type SetForLog = SetBase & {
-  exerciseLogId?: string;
+export type LogSet = SetBase & {
+  logExerciseId?: string;
 };
 
-export type SetUI = SetForProgram | SetForLog;
+export type SetUI = SetForProgram | LogSet;
 
 export type BaseExercise = {
   id?: string;
@@ -60,7 +60,7 @@ export const createProgramExercise = (
 export type LogExercise = BaseExercise & {
   kind: string;
   logId?: number;
-  sets: SetForLog[];
+  sets: LogSet[];
 };
 
 export const createLogExerise = (
@@ -69,7 +69,7 @@ export const createLogExerise = (
   name: string,
   unit: string | null,
   imageUri: string | undefined | null,
-  sets: SetForLog[],
+  sets: LogSet[],
 ): LogExercise => ({
   kind: "log",
   id: id,
