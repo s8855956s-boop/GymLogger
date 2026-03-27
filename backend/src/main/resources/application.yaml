@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: backend
+  datasource:
+    url: jdbc:mysql://localhost:3306/gym_log_db
+    username: root
+    password: "@we#$RtgBDja8&*"
+    driver-class-name: com.mysql.cj.jdbc.Driver
