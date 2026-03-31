@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/gymLog")
 public class GymLogController {
@@ -28,7 +30,7 @@ public class GymLogController {
     }
 
     @PostMapping
-    public void saveGymLog(@RequestBody GymLog gymLog) {
+    public void saveGymLog(@RequestBody List<GymLog> gymLog) {
         service.saveGymLog(gymLog);
     }
 

@@ -1,6 +1,7 @@
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  Button,
   Image,
   Modal,
   Pressable,
@@ -11,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import synchronizeData from "../commonFunctions/sync";
 import { createId, initDb, logExists, saveLog, saveLogExercises } from "../db";
 import { createLogExerise, type ExerciseUI, type SetUI } from "../types";
 
@@ -60,8 +62,7 @@ export default function ExerciseCardDetail({
     isLog?: string;
   }>();
   const isLog = isLogParam === undefined ? true : isLogParam === "true";
-  const logId =
-    logIdParam === undefined ? 0 : Date.parse(logIdParam);
+  const logId = logIdParam === undefined ? 0 : Date.parse(logIdParam);
   const logExerciseId =
     exerciseIdParam === undefined && !isLog ? "" : exerciseIdParam;
   const initialValue = useMemo(() => {
@@ -230,7 +231,14 @@ export default function ExerciseCardDetail({
           { paddingBottom: saveButtonHeight + 16 },
         ]}
       >
-        <Stack.Screen options={{ title: exerciseName }} />
+        <Stack.Screen
+          options={{
+            title: exerciseName,
+            headerRight: () => (
+              <Button title="同步" onPress={() => synchronizeData()} />
+            ),
+          }}
+        />
         <View style={styles.header}>
           <Text style={styles.title}>訓練內容</Text>
           <View style={styles.unitRow}>

@@ -23,8 +23,8 @@ public class GymLogService {
         return repository.findById(id).orElse(null);
     }
 
-    public void saveGymLog(GymLog gymLog) {
-        repository.save(gymLog);
+    public void saveGymLog(List<GymLog> gymLog) {
+        repository.saveAll(gymLog);
     }
 
     public void deleteGymLogById(String id){

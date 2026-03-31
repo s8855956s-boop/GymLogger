@@ -1,7 +1,8 @@
 ﻿import { router, Stack } from "expo-router";
 import { useMemo, useState } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Button, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { Calendar } from "react-native-calendars";
+import synchronizeData from "../commonFunctions/sync";
 
 export default function Index() {
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -73,7 +74,14 @@ export default function Index() {
 
   return (
     <View style={styles.mainContainer}>
-      <Stack.Screen options={{ title: "首頁" }} />
+      <Stack.Screen
+        options={{
+          title: "首頁",
+          headerRight: () => (
+            <Button title="同步" onPress={() => synchronizeData()} />
+          ),
+        }}
+      />
       <Pressable onPress={() => handlePress()}>
         <View style={styles.card}>
           <Text style={styles.title}>訓練課表</Text>

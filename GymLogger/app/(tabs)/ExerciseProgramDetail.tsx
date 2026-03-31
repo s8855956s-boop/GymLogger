@@ -3,12 +3,14 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
+  Button,
   Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import synchronizeData from "../commonFunctions/sync";
 import ExerciseCard from "../components/ExerciseCard";
 import {
   deleteLogExercise,
@@ -50,9 +52,7 @@ export default function ExerciseProgramDetail({
 
   const loadExercises = useCallback(async () => {
     if (isLog) {
-      const log = await getLogByDate(
-        Date.parse(selectedDate ?? ""),
-      );
+      const log = await getLogByDate(Date.parse(selectedDate ?? ""));
       if (
         log != null &&
         log !== undefined &&
@@ -144,9 +144,23 @@ export default function ExerciseProgramDetail({
         <Text style={styles.addButtonText}>+</Text>
       </TouchableOpacity>
       {isLog ? (
-        <Stack.Screen options={{ title: selectedDate ?? "" }} />
+        <Stack.Screen
+          options={{
+            title: selectedDate ?? "",
+            headerRight: () => (
+              <Button title="同步" onPress={() => synchronizeData()} />
+            ),
+          }}
+        />
       ) : (
-        <Stack.Screen options={{ title: programName ?? "Program" }} />
+        <Stack.Screen
+          options={{
+            title: programName ?? "Program",
+            headerRight: () => (
+              <Button title="同步" onPress={() => synchronizeData()} />
+            ),
+          }}
+        />
       )}
       {exercises.map((row, index) => (
         <Pressable

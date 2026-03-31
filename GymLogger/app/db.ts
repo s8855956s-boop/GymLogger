@@ -68,9 +68,33 @@ export const initDb = async () => {
       date_id INTEGER PRIMARY KEY NOT NULL,
       date INTEGER NOT NULL,
       create_time INTEGER NOT NULL,
-      update_time INTEGER NOT NULL
+      update_time INTEGER NOT NULL,
+      syncronized INTEGER NOT NULL DEFAULT 0
     );
   `);
+};
+
+export const fecthUnsyncedLogs = async (): Promise<Log[]> => {
+  const db = await getDb();
+  const unsyncedLogs = (await db.getAllAsync(
+    "SELECT date_id As dateId FROM log WHERE syncronized = 0",
+  )) as { dateId: number }[];
+  const logs: Log[] = [];
+  for (const log of unsyncedLogs) {
+    const fullLog = await getLogByDate(log.dateId);
+    logs.push(fullLog);
+  }
+  return logs;
+};
+
+export const markLogsAsSynced = async (dateIds: number[]) => {
+  const db = await getDb();
+  if (dateIds.length === 0) return;
+  const placeholders = dateIds.map(() => "?").join(", ");
+  await db.runAsync(
+    `UPDATE log SET syncronized = 1 WHERE date_id IN (${placeholders})`,
+    dateIds,
+  );
 };
 
 export const listPrograms = async (): Promise<Program[]> => {
@@ -95,15 +119,12 @@ export const logExists = async (id: number) => {
 
   const row = await db.getFirstAsync(
     "SELECT 1 FROM log WHERE date_id = ? LIMIT 1",
-    [id]
+    [id],
   );
   return !!row;
 };
 
-
-export const getLogByDate = async (
-  date: number,
-): Promise<Log> => {
+export const getLogByDate = async (date: number): Promise<Log> => {
   const db = await getDb();
 
   type ExerciseSets = {
@@ -147,16 +168,16 @@ export const getLogByDate = async (
   for (const key of groupedByExerciseId.keys()) {
     const exerciseSets = groupedByExerciseId.get(key);
     if (exerciseSets === undefined) continue;
-    const setRows = exerciseSets?.filter((set) => set.id).map((set) => {
-      return {
-        id: set.id,
-        logExerciseId: set.logExerciseId,
-        reps: set.reps == null ? undefined : Number(set.reps),
-        weight: set.weight == null ? undefined : Number(set.weight),
-      };
-    });
-
-    
+    const setRows = exerciseSets
+      ?.filter((set) => set.id)
+      .map((set) => {
+        return {
+          id: set.id,
+          logExerciseId: set.logExerciseId,
+          reps: set.reps == null ? undefined : Number(set.reps),
+          weight: set.weight == null ? undefined : Number(set.weight),
+        };
+      });
 
     logExercises.push(
       createLogExerise(
@@ -273,7 +294,9 @@ export const saveProgramExercise = async (
 
 export const deleteLogExercise = async (exerciseId: string) => {
   const db = await getDb();
-  await db.runAsync("DELETE FROM log_set WHERE log_exercise_id = ?", [exerciseId]);
+  await db.runAsync("DELETE FROM log_set WHERE log_exercise_id = ?", [
+    exerciseId,
+  ]);
   await db.runAsync("DELETE FROM log_exercise WHERE id = ?", [exerciseId]);
 };
 
@@ -306,10 +329,7 @@ export const saveLogExercises = async (values: LogExercise[]) => {
   );
 };
 
-export const saveLogSets = async (
-  values: LogSet[],
-  logExerciseId?: string,
-) => {
+export const saveLogSets = async (values: LogSet[], logExerciseId?: string) => {
   const db = await getDb();
   await Promise.all(
     values.map(async (value) => {
@@ -332,26 +352,24 @@ export const saveLogSets = async (
     }),
   );
 
-const ids = values.flatMap((value) => (value.id ? [value.id] : []));
+  const ids = values.flatMap((value) => (value.id ? [value.id] : []));
 
-if (logExerciseId) {
-  if (ids.length === 0) {
-    await db.runAsync("DELETE FROM log_set WHERE log_exercise_id = ?", [
-      logExerciseId,
-    ]);
-  } else {
-    const placeholders = ids.map(() => "?").join(", ");
-    await db.runAsync(
-      `DELETE FROM log_set WHERE log_exercise_id = ? AND id NOT IN (${placeholders})`,
-      [logExerciseId, ...ids],
-    );
+  if (logExerciseId) {
+    if (ids.length === 0) {
+      await db.runAsync("DELETE FROM log_set WHERE log_exercise_id = ?", [
+        logExerciseId,
+      ]);
+    } else {
+      const placeholders = ids.map(() => "?").join(", ");
+      await db.runAsync(
+        `DELETE FROM log_set WHERE log_exercise_id = ? AND id NOT IN (${placeholders})`,
+        [logExerciseId, ...ids],
+      );
+    }
   }
-}
 };
 
-export const saveExerciseLogsWithSets = async (
-  LogExercises: LogExercise[],
-) => {
+export const saveExerciseLogsWithSets = async (LogExercises: LogExercise[]) => {
   await saveLogExercises(LogExercises);
 };
 

@@ -1,5 +1,7 @@
 package com.gymLog.backend.entity;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
@@ -16,7 +18,8 @@ import java.util.List;
 @Setter
 public class GymLog {
     @Id
-    private BigDecimal id;
-    @OneToMany
+    @Column(name = "date_id")
+    private Long dateId;
+    @OneToMany(mappedBy = "gymLog", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LogExercise> logExercises;
 }
