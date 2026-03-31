@@ -69,7 +69,7 @@ export const initDb = async () => {
       date INTEGER NOT NULL,
       create_time INTEGER NOT NULL,
       update_time INTEGER NOT NULL,
-      syncronized INTEGER NOT NULL DEFAULT 0
+      synchronized INTEGER NOT NULL DEFAULT 0
     );
   `);
 };
@@ -77,7 +77,7 @@ export const initDb = async () => {
 export const fecthUnsyncedLogs = async (): Promise<Log[]> => {
   const db = await getDb();
   const unsyncedLogs = (await db.getAllAsync(
-    "SELECT date_id As dateId FROM log WHERE syncronized = 0",
+    "SELECT date_id As dateId FROM log WHERE synchronized = 0",
   )) as { dateId: number }[];
   const logs: Log[] = [];
   for (const log of unsyncedLogs) {
@@ -92,7 +92,7 @@ export const markLogsAsSynced = async (dateIds: number[]) => {
   if (dateIds.length === 0) return;
   const placeholders = dateIds.map(() => "?").join(", ");
   await db.runAsync(
-    `UPDATE log SET syncronized = 1 WHERE date_id IN (${placeholders})`,
+    `UPDATE log SET synchronized = 1 WHERE date_id IN (${placeholders})`,
     dateIds,
   );
 };
@@ -302,6 +302,10 @@ export const deleteLogExercise = async (exerciseId: string) => {
 
 export const saveLogExercises = async (values: LogExercise[]) => {
   const db = await getDb();
+  await db.runAsync(
+    "UPDATE log SET update_time = (strftime('%s','now') * 1000), synchronized = 0 WHERE date_id = ?",
+    [values[0].logId ?? null],
+  );
   await Promise.all(
     values.map(async (value) => {
       await db.runAsync(
