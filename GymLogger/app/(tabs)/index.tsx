@@ -1,8 +1,10 @@
-﻿import { router, Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import { useMemo, useState } from "react";
 import { Button, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { Calendar } from "react-native-calendars";
 import synchronizeData from "../commonFunctions/sync";
+import useSyncFeedback from "../commonFunctions/useSyncFeedback";
+import SyncStatusToast from "../components/SyncStatusToast";
 
 export default function Index() {
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -13,6 +15,7 @@ export default function Index() {
   const [isPickerOpen, setPickerOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState(currentMonth.getFullYear());
   const [pickerMonth, setPickerMonth] = useState(currentMonth.getMonth() + 1);
+  const { feedback, opacity, showSyncFeedback } = useSyncFeedback();
 
   const yearOptions = useMemo(() => {
     const year = currentMonth.getFullYear();
@@ -72,13 +75,18 @@ export default function Index() {
     });
   };
 
+  const handleSynchronize = async () => {
+    const result = await synchronizeData();
+    showSyncFeedback(result);
+  };
+
   return (
     <View style={styles.mainContainer}>
       <Stack.Screen
         options={{
           title: "首頁",
           headerRight: () => (
-            <Button title="同步" onPress={() => synchronizeData()} />
+            <Button title="同步" onPress={() => void handleSynchronize()} />
           ),
         }}
       />
@@ -193,6 +201,11 @@ export default function Index() {
           </View>
         </View>
       </Modal>
+      <SyncStatusToast
+        message={feedback?.message ?? null}
+        color={feedback?.color ?? "#22C55E"}
+        opacity={opacity}
+      />
     </View>
 
     // <SafeAreaView style={styles.container}>
@@ -219,6 +232,7 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
   mainContainer: {
+    flex: 1,
     marginTop: 12,
     marginHorizontal: 12,
   },

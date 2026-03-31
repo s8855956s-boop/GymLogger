@@ -13,6 +13,8 @@ import {
   View,
 } from "react-native";
 import synchronizeData from "../commonFunctions/sync";
+import useSyncFeedback from "../commonFunctions/useSyncFeedback";
+import SyncStatusToast from "../components/SyncStatusToast";
 import { createId, initDb, logExists, saveLog, saveLogExercises } from "../db";
 import { createLogExerise, type ExerciseUI, type SetUI } from "../types";
 
@@ -94,7 +96,8 @@ export default function ExerciseCardDetail({
   }, [valueParam, valueProp]);
 
   const [value, setValue] = useState<ExerciseUI>(initialValue);
-  const [exerciseName, setExerciseName] = useState(name ?? "運動項目");
+  const [exerciseName, setExerciseName] = useState(name ?? "???????");
+  const { feedback, opacity, showSyncFeedback } = useSyncFeedback();
 
   useEffect(() => {
     void initDb();
@@ -220,6 +223,11 @@ export default function ExerciseCardDetail({
     router.back();
   };
 
+  const handleSynchronize = async () => {
+    const result = await synchronizeData();
+    showSyncFeedback(result);
+  };
+
   const saveButtonHeight = 56;
 
   return (
@@ -235,7 +243,7 @@ export default function ExerciseCardDetail({
           options={{
             title: exerciseName,
             headerRight: () => (
-              <Button title="同步" onPress={() => synchronizeData()} />
+              <Button title="同步" onPress={() => void handleSynchronize()} />
             ),
           }}
         />
@@ -350,6 +358,11 @@ export default function ExerciseCardDetail({
       >
         <Text style={styles.saveText}>儲存</Text>
       </Pressable>
+      <SyncStatusToast
+        message={feedback?.message ?? null}
+        color={feedback?.color ?? "#22C55E"}
+        opacity={opacity}
+      />
     </View>
   );
 }

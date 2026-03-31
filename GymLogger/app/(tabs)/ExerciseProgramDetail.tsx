@@ -1,4 +1,4 @@
-import { useFocusEffect } from "@react-navigation/native";
+﻿import { useFocusEffect } from "@react-navigation/native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -11,7 +11,9 @@ import {
   View,
 } from "react-native";
 import synchronizeData from "../commonFunctions/sync";
+import useSyncFeedback from "../commonFunctions/useSyncFeedback";
 import ExerciseCard from "../components/ExerciseCard";
+import SyncStatusToast from "../components/SyncStatusToast";
 import {
   deleteLogExercise,
   getExercisesForProgramByProgramId,
@@ -49,6 +51,7 @@ export default function ExerciseProgramDetail({
 
   const selectedDate = selectedDateParam;
   const [exercises, setExercises] = useState<ExerciseUI[]>([]);
+  const { feedback, opacity, showSyncFeedback } = useSyncFeedback();
 
   const loadExercises = useCallback(async () => {
     if (isLog) {
@@ -138,6 +141,11 @@ export default function ExerciseProgramDetail({
     );
   };
 
+  const handleSynchronize = async () => {
+    const result = await synchronizeData();
+    showSyncFeedback(result);
+  };
+
   return (
     <View style={styles.mainContainer}>
       <TouchableOpacity style={styles.addButton} onPress={() => handleAdd()}>
@@ -148,7 +156,7 @@ export default function ExerciseProgramDetail({
           options={{
             title: selectedDate ?? "",
             headerRight: () => (
-              <Button title="同步" onPress={() => synchronizeData()} />
+              <Button title="同步" onPress={() => void handleSynchronize()} />
             ),
           }}
         />
@@ -157,7 +165,7 @@ export default function ExerciseProgramDetail({
           options={{
             title: programName ?? "Program",
             headerRight: () => (
-              <Button title="同步" onPress={() => synchronizeData()} />
+              <Button title="同步" onPress={() => void handleSynchronize()} />
             ),
           }}
         />
@@ -175,12 +183,18 @@ export default function ExerciseProgramDetail({
           />
         </Pressable>
       ))}
+      <SyncStatusToast
+        message={feedback?.message ?? null}
+        color={feedback?.color ?? "#22C55E"}
+        opacity={opacity}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   mainContainer: {
+    flex: 1,
     marginTop: 10,
     gap: 10,
     paddingHorizontal: 16,
