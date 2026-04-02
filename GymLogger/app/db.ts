@@ -136,11 +136,19 @@ export const getLogByDate = async (date: number): Promise<Log> => {
     imageUri: string;
     reps: string;
     weight: string;
+    exerciseCreateDate: number;
+    exerciseUpdateDate: number;
+    setCreateDate: number;
+    setUpdateDate: number;
+    logCreateDate: number;
+    logUpdateDate: number;
   };
   const queryResults = (await db.getAllAsync(
     `
   SELECT
-    ls.id, le.id AS logExerciseId, le.log_id AS logId, le.name, le.unit, le.image_uri AS imageUri, ls.reps, ls.weight
+    tdl.create_time AS logCreateDate, tdl.update_time AS logUpdateDate,
+    ls.id, le.id AS logExerciseId, le.log_id AS logId, le.name, le.unit, le.image_uri AS imageUri, le.create_time AS exerciseCreateDate, le.update_time AS exerciseUpdateDate,
+    ls.reps, ls.weight, ls.create_time AS setCreateDate, ls.update_time AS setUpdateDate
   FROM
     log tdl
   LEFT JOIN log_exercise le ON tdl.date_id = le.log_id
@@ -176,6 +184,12 @@ export const getLogByDate = async (date: number): Promise<Log> => {
           logExerciseId: set.logExerciseId,
           reps: set.reps == null ? undefined : Number(set.reps),
           weight: set.weight == null ? undefined : Number(set.weight),
+          createDate: set.setCreateDate
+            ? new Date(set.setCreateDate)
+            : undefined,
+          updateDate: set.setUpdateDate
+            ? new Date(set.setUpdateDate)
+            : undefined,
         };
       });
 
@@ -187,6 +201,12 @@ export const getLogByDate = async (date: number): Promise<Log> => {
         exerciseSets[0].unit,
         exerciseSets[0].imageUri,
         setRows,
+        exerciseSets[0].exerciseCreateDate
+          ? new Date(exerciseSets[0].exerciseCreateDate)
+          : undefined,
+        exerciseSets[0].exerciseUpdateDate
+          ? new Date(exerciseSets[0].exerciseUpdateDate)
+          : undefined,
       ),
     );
   }
@@ -195,6 +215,12 @@ export const getLogByDate = async (date: number): Promise<Log> => {
     dateId: distinctLogId,
     date: new Date(date),
     logExercises: logExercises,
+    createDate: queryResults[0].logCreateDate
+      ? new Date(queryResults[0].logCreateDate)
+      : undefined,
+    updateDate: queryResults[0].logUpdateDate
+      ? new Date(queryResults[0].logUpdateDate)
+      : undefined,
   };
 };
 

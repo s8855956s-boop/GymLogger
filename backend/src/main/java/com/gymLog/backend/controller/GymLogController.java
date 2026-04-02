@@ -25,17 +25,22 @@ public class GymLogController {
     }
 
     @GetMapping("/{id}")
-    public void getGymLogById(@PathVariable String id) {
+    public void getGymLogById(@PathVariable Long id) {
         service.getGymLogById(id);
     }
 
     @PostMapping
-    public void saveGymLog(@RequestBody List<GymLog> gymLog) {
-        service.saveGymLog(gymLog);
+    public void saveGymLog(@RequestBody List<GymLog> gymLogs) {
+        service.saveGymLog(gymLogs);
+    }
+
+    @PostMapping("/synchronize")
+    public void synchronizeGymLog(@RequestBody List<GymLog> gymLogs) {
+        service.synchronizeGymLog(gymLogs);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteGymLogById(@PathVariable String id) {
+    public void deleteGymLogById(@PathVariable Long id) {
         service.deleteGymLogById(id);
     }
 }

@@ -12,7 +12,7 @@ const synchronizeData = async (): Promise<SyncResult> => {
       return "empty";
     }
     // Send local data to the backend API
-    await backendApis.saveLog(localData);
+    await backendApis.syncData(localData);
     const syncedIds = localData
       .map((log) => log.dateId)
       .filter((dateId): dateId is number => dateId !== undefined);

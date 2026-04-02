@@ -19,6 +19,10 @@ class BackendApis {
     await this.post("/gymLog", logData);
   }
 
+  async syncData(logData: unknown): Promise<void> {
+    await this.post("/gymLog/synchronize", logData);
+  }
+
   async get<T>(endpoint: string, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.apiClient.get<T>(endpoint, config);
     return response.data;

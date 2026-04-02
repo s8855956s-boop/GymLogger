@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "LOG_SET")
@@ -19,11 +20,20 @@ public class LogSet {
     @Id
     @Column(name = "id")
     private String id;
+
     @ManyToOne
     @JoinColumn(name = "log_exercise_id")
     private LogExercise logExercise;
+
     @Column(name = "reps")
     private BigDecimal reps;
+
     @Column(name = "weight")
     private BigDecimal weight;
+
+    @Column(name = "create_date")
+    private LocalDateTime createDate;
+
+    @Column(name = "update_date")
+    private LocalDateTime updateDate;
 }

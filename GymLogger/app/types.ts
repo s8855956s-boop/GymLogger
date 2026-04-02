@@ -8,12 +8,16 @@ export type Log = {
   dateId?: number;
   date?: Date;
   logExercises?: LogExercise[];
+  createDate?: Date;
+  updateDate?: Date;
 };
 
 export type SetBase = {
   id: string;
   reps?: number;
   weight?: number;
+  createDate?: Date;
+  updateDate?: Date;
 };
 
 export type SetForProgram = SetBase & {
@@ -32,6 +36,8 @@ export type BaseExercise = {
   unit: string | null;
   imageUri?: string | null;
   sets: SetBase[];
+  createDate?: Date;
+  updateDate?: Date;
 };
 
 export type ProgramExercise = BaseExercise & {
@@ -70,6 +76,8 @@ export const createLogExerise = (
   unit: string | null,
   imageUri: string | undefined | null,
   sets: LogSet[],
+  createDate?: Date,
+  updateDate?: Date,
 ): LogExercise => ({
   kind: "log",
   id: id,
@@ -77,6 +85,8 @@ export const createLogExerise = (
   name: name,
   unit: unit,
   imageUri: imageUri,
+  createDate: createDate,
+  updateDate: updateDate,
   sets: sets,
 });
 

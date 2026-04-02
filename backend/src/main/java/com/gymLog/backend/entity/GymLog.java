@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -20,6 +21,13 @@ public class GymLog {
     @Id
     @Column(name = "date_id")
     private Long dateId;
+
+    @Column(name = "create_date")
+    private LocalDateTime createDate;
+
+    @Column(name = "update_date")
+    private LocalDateTime updateDate;
+
     @OneToMany(mappedBy = "gymLog", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LogExercise> logExercises;
 }

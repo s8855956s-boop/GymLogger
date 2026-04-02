@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -22,15 +23,25 @@ public class LogExercise {
     @Id
     @Column(name = "id")
     private String id;
+
     @ManyToOne
     @JoinColumn(name = "gym_log_id")
     private GymLog gymLog;
 
     @Column(name = "name")
     private String name;
+
     @Column(name = "unit")
     private String unit;
+
+    @Column(name = "create_date")
+    private LocalDateTime createDate;
+
+    @Column(name = "update_date")
+    private LocalDateTime updateDate;
+
     //image
+
     @OneToMany(mappedBy = "logExercise", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LogSet> sets;
 }
